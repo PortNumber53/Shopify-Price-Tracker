@@ -48,9 +48,14 @@ pipeline {
                 // Secure copy the newly built binary and systemd service file to grimlock@web1
                 sh "scp -o StrictHostKeyChecking=no backend/bin/api ${DEPLOY_HOST}:${DEPLOY_DIR_BIN}/api"
                 sh "scp -o StrictHostKeyChecking=no backend/api-shopify-price-tracker.service ${DEPLOY_HOST}:${DEPLOY_DIR_BIN}/api-shopify-price-tracker.service"
+                sh "scp -o StrictHostKeyChecking=no _env.example ${DEPLOY_HOST}:${DEPLOY_DIR_BIN}/config.ini.example"
                 
-                // Copy the systemd unit to /etc/systemd/system using sudo, set permissions, and restart
+                // Copy the systemd unit and template config to their paths using sudo, set permissions, and restart
                 sh """ssh -o StrictHostKeyChecking=no ${DEPLOY_HOST} '
+                    sudo mkdir -p /etc/api-shopfiy-price-tracker.truvis.co &&
+                    if [ ! -f /etc/api-shopfiy-price-tracker.truvis.co/config.ini ]; then
+                        sudo cp ${DEPLOY_DIR_BIN}/config.ini.example /etc/api-shopfiy-price-tracker.truvis.co/config.ini
+                    fi &&
                     sudo cp ${DEPLOY_DIR_BIN}/api-shopify-price-tracker.service /etc/systemd/system/api-shopify-price-tracker.service &&
                     sudo chmod 644 /etc/systemd/system/api-shopify-price-tracker.service &&
                     sudo systemctl daemon-reload &&
