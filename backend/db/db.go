@@ -71,5 +71,19 @@ func createTables(db *sql.DB) {
 		log.Fatalf("Failed to create tables: %v", err)
 	}
 
+	// 5. Create domain_selectors table
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS domain_selectors (
+			id SERIAL PRIMARY KEY,
+			domain VARCHAR(255) UNIQUE NOT NULL,
+			css_selector VARCHAR(255) NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	if err != nil {
+		log.Fatal("Failed to create domain_selectors table:", err)
+	}
+
 	log.Println("Database tables initialized successfully")
 }

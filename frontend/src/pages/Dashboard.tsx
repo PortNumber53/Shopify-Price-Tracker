@@ -24,12 +24,41 @@ export default function Dashboard() {
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
   const [isSubscribed, setIsSubscribed] = useState(true);
+  const [maxTrackers, setMaxTrackers] = useState(1);
 
   useEffect(() => {
+    const updateMaxTrackers = (u: any) => {
+      let max = 1;
+      if (u && u.subscription_active) {
+        if (u.plan_type === 'premium') max = 100;
+        else max = 25; // Default Pro limit
+      }
+      setMaxTrackers(max);
+    };
+
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (user && user.subscription_active === false) {
       setIsSubscribed(false);
+    }
+    updateMaxTrackers(user);
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch(`${API_URL}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+            setIsSubscribed(data.user.subscription_active !== false);
+            updateMaxTrackers(data.user);
+          }
+        })
+        .catch(console.error);
     }
   }, []);
 
@@ -134,6 +163,28 @@ export default function Dashboard() {
     }
   };
 
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch(`${API_URL}/api/urls/sync`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) {
+        // Wait a few seconds for the background worker to finish scraping
+        setTimeout(() => {
+          fetchUrls();
+          setIsSyncing(false);
+        }, 3000);
+      } else {
+        setIsSyncing(false);
+      }
+    } catch (err) {
+      console.error('Sync failed:', err);
+      setIsSyncing(false);
+    }
+  };
+
   if (!isSubscribed) {
     return (
       <div className="container" style={{ padding: '4rem 1.5rem', flex: 1, textAlign: 'center' }}>
@@ -179,7 +230,18 @@ export default function Dashboard() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h2>Watcher Dashboard</h2>
-        <span style={{ color: 'var(--text-muted)' }}>{urls.length} / 10 active trackers</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button 
+            onClick={handleSync} 
+            disabled={isSyncing || urls.length === 0}
+            className="btn btn-outline"
+            style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'var(--border-light)', color: 'var(--text-main)', fontSize: '0.875rem' }}
+          >
+            {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+            Synchronize
+          </button>
+          <span style={{ color: 'var(--text-muted)' }}>{urls.length} active trackers</span>
+        </div>
       </div>
 
       <div className="glass-card" style={{ marginBottom: '3rem' }}>
@@ -207,11 +269,16 @@ export default function Dashboard() {
               style={{ marginBottom: 0 }}
             />
           </div>
-          <button type="submit" className="btn btn-primary" disabled={isAdding || urls.length >= 10}>
+          <button type="submit" className="btn btn-primary" disabled={isAdding || urls.length >= maxTrackers}>
             {isAdding ? <RefreshCw size={18} className="animate-spin" /> : <Plus size={18} />}
             Start Tracking
           </button>
         </form>
+        {urls.length >= maxTrackers && (
+          <div style={{ marginTop: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            You've reached your plan's limit of {maxTrackers} trackers.
+          </div>
+        )}
       </div>
 
       {loading ? (

@@ -15,8 +15,12 @@ import (
 
 func main() {
 	// Load environment variables
-	if err := godotenv.Load("../_env.example"); err != nil {
-		log.Println("No _env.example file found or error loading, relying on environment variables")
+	if err := godotenv.Load(".env"); err != nil {
+		log.Println("No local .env file found, trying parent directory ...")
+		if err := godotenv.Load("../.env"); err != nil {
+			log.Println("No parent ../.env file found, falling back to ../_env.example or environment variables")
+			_ = godotenv.Load("../_env.example")
+		}
 	}
 
 	cfg := config.LoadConfig()
@@ -48,13 +52,22 @@ func main() {
 	r.POST("/api/auth/login", handlers.Login(database))
 
 	// Protected routes
-	authRoutes := r.Group("/api/urls")
-	authRoutes.Use(middleware.AuthMiddleware())
+	// Protected URL routes
+	urlRoutes := r.Group("/api/urls")
+	urlRoutes.Use(middleware.AuthMiddleware())
 	{
-		authRoutes.POST("", handlers.AddURL(database))
-		authRoutes.GET("", handlers.GetURLs(database))
-		authRoutes.DELETE("/:id", handlers.DeleteURL(database))
-		authRoutes.GET("/:id/history", handlers.GetURLHistory(database))
+		urlRoutes.POST("", handlers.AddURL(database))
+		urlRoutes.GET("", handlers.GetURLs(database))
+		urlRoutes.DELETE("/:id", handlers.DeleteURL(database))
+		urlRoutes.GET("/:id/history", handlers.GetURLHistory(database))
+		urlRoutes.POST("/sync", handlers.SyncURLs(database, cfg))
+	}
+
+	// Protected Auth routes
+	protectedAuthRoutes := r.Group("/api/auth")
+	protectedAuthRoutes.Use(middleware.AuthMiddleware())
+	{
+		protectedAuthRoutes.GET("/me", handlers.Me(database))
 	}
 
 	// Stripe routes
@@ -73,6 +86,7 @@ func main() {
 
 	// Start Background Workers
 	services.StartTwoWaySyncWorker(database, cfg)
+	services.StartScraperWorker(database, cfg)
 
 	// Example migration: migrating from old "pro" to new "premium" after 30 days
 	// services.StartMigrationWorker(database, cfg, "old_price_id", cfg.StripePricePremium, 30)

@@ -10,6 +10,21 @@ export default function Subscription() {
   useEffect(() => {
     const localUser = JSON.parse(localStorage.getItem('user') || '{}');
     setUser(localUser);
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch(`${API_URL}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+            setUser(data.user);
+          }
+        })
+        .catch(console.error);
+    }
   }, []);
 
   const handleCheckout = async (planType: string) => {

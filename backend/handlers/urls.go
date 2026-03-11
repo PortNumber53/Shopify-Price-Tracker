@@ -5,7 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/truvis/shopify-price-tracker/backend/config"
 	"github.com/truvis/shopify-price-tracker/backend/models"
+	"github.com/truvis/shopify-price-tracker/backend/services"
 )
 
 func AddURL(db *sql.DB) gin.HandlerFunc {
@@ -161,5 +163,21 @@ func GetURLHistory(db *sql.DB) gin.HandlerFunc {
 			history = make([]models.PriceLog, 0)
 		}
 		c.JSON(http.StatusOK, history)
+	}
+}
+
+// SyncURLs manually triggers the background scraper for testing
+func SyncURLs(db *sql.DB, cfg config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetString("userID")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		// Because the scraper is async and runs in background
+		go services.TriggerScrape(db, cfg)
+
+		c.JSON(http.StatusAccepted, gin.H{"message": "Sync job triggered successfully. Prices will update shortly."})
 	}
 }

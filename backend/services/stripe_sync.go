@@ -7,6 +7,7 @@ import (
 
 	"github.com/stripe/stripe-go/v76"
 	"github.com/stripe/stripe-go/v76/price"
+	"github.com/stripe/stripe-go/v76/product"
 	"github.com/stripe/stripe-go/v76/subscription"
 	"github.com/truvis/shopify-price-tracker/backend/config"
 )
@@ -36,6 +37,17 @@ func SyncPlans(db *sql.DB, cfg config.Config) {
 
 	log.Println("[StripeSync] Synchronizing subscription plans from Stripe...")
 
+	// The expected plans that our application controls
+	expectedPlans := map[string]struct {
+		Name   string
+		Amount int64
+		Found  bool
+	}{
+		"free":    {"Shopify Price Tracker - Free", 0, false},
+		"pro":     {"Shopify Price Tracker - Pro", 1900, false},
+		"premium": {"Shopify Price Tracker - Premium", 5000, false},
+	}
+
 	params := &stripe.PriceListParams{
 		Active: stripe.Bool(true),
 	}
@@ -58,6 +70,12 @@ func SyncPlans(db *sql.DB, cfg config.Config) {
 			continue
 		}
 
+		// Mark as found if it's one of our expected plans
+		if expected, exists := expectedPlans[planType]; exists {
+			expected.Found = true
+			expectedPlans[planType] = expected
+		}
+
 		// Upsert the active price into our plans table 
 		_, err := db.Exec(`
 			INSERT INTO plans (plan_type, stripe_price_id, price_cents, currency)
@@ -77,6 +95,56 @@ func SyncPlans(db *sql.DB, cfg config.Config) {
 
 	if iter.Err() != nil {
 		log.Printf("[StripeSync] Stripe API error while listing prices: %v", iter.Err())
+	}
+
+	// Create any missing expected plans
+	for planType, expected := range expectedPlans {
+		if !expected.Found {
+			log.Printf("[StripeSync] Expected plan '%s' not found on Stripe. Creating it automatically...", planType)
+			
+			prodParams := &stripe.ProductParams{
+				Name: stripe.String(expected.Name),
+				Metadata: map[string]string{
+					"saas_id":   cfg.StripeSaaSID,
+					"plan_type": planType,
+				},
+			}
+			prod, err := product.New(prodParams)
+			if err != nil {
+				log.Printf("[StripeSync] Failed to create product %s: %v", expected.Name, err)
+				continue
+			}
+
+			priceParams := &stripe.PriceParams{
+				Product:    stripe.String(prod.ID),
+				UnitAmount: stripe.Int64(expected.Amount),
+				Currency:   stripe.String(string(stripe.CurrencyUSD)),
+				Recurring: &stripe.PriceRecurringParams{
+					Interval: stripe.String(string(stripe.PriceRecurringIntervalMonth)),
+				},
+			}
+			pr, err := price.New(priceParams)
+			if err != nil {
+				log.Printf("[StripeSync] Failed to create price for %s: %v", expected.Name, err)
+				continue
+			}
+
+			// Insert directly into DB to avoid waiting for next sync
+			_, err = db.Exec(`
+				INSERT INTO plans (plan_type, stripe_price_id, price_cents, currency)
+				VALUES ($1, $2, $3, $4)
+				ON CONFLICT (plan_type) DO UPDATE SET
+					stripe_price_id = EXCLUDED.stripe_price_id,
+					price_cents = EXCLUDED.price_cents,
+					currency = EXCLUDED.currency
+			`, planType, pr.ID, pr.UnitAmount, string(pr.Currency))
+			
+			if err != nil {
+				log.Printf("[StripeSync] Failed to upsert newly created plan '%s' to DB: %v", planType, err)
+			} else {
+				log.Printf("[StripeSync] Successfully created and synced missing plan '%s' -> Price ID: %s", planType, pr.ID)
+			}
+		}
 	}
 }
 

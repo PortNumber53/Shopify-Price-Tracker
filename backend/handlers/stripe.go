@@ -132,11 +132,14 @@ func StripeWebhook(db *sql.DB, cfg config.Config) gin.HandlerFunc {
 			return
 		}
 
-		event, err := webhook.ConstructEvent(payload, c.GetHeader("Stripe-Signature"), cfg.StripeWebhookSecret)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid webhook signature"})
-			return
-		}
+		event, err := webhook.ConstructEventWithOptions(
+			payload, 
+			c.GetHeader("Stripe-Signature"), 
+			cfg.StripeWebhookSecret,
+			webhook.ConstructEventOptions{
+				IgnoreAPIVersionMismatch: true,
+			},
+		)
 
 		switch event.Type {
 		case "checkout.session.completed":

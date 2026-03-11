@@ -68,10 +68,13 @@ func Login(db *sql.DB) gin.HandlerFunc {
 		}
 
 		var user models.User
+		var stripeCustID sql.NullString
+		var subActive sql.NullBool
+
 		err := db.QueryRow(
 			"SELECT id, email, password_hash, stripe_customer_id, subscription_active FROM users WHERE email = $1",
 			req.Email,
-		).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.StripeCustomerID, &user.SubscriptionActive)
+		).Scan(&user.ID, &user.Email, &user.PasswordHash, &stripeCustID, &subActive)
 
 		if err != nil {
 			if err == sql.ErrNoRows {
@@ -81,6 +84,9 @@ func Login(db *sql.DB) gin.HandlerFunc {
 			}
 			return
 		}
+
+		user.StripeCustomerID = stripeCustID.String
+		user.SubscriptionActive = subActive.Bool
 
 		if !utils.CheckPasswordHash(req.Password, user.PasswordHash) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
@@ -100,6 +106,39 @@ func Login(db *sql.DB) gin.HandlerFunc {
 				"id":                  user.ID,
 				"email":               user.Email,
 				"subscription_active": user.SubscriptionActive,
+			},
+		})
+	}
+}
+
+func Me(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetString("userID")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		var user models.User
+		var subActive sql.NullBool
+		var planType sql.NullString
+
+		err := db.QueryRow(
+			"SELECT id, email, subscription_active, plan_type FROM users WHERE id = $1",
+			userID,
+		).Scan(&user.ID, &user.Email, &subActive, &planType)
+
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"user": gin.H{
+				"id":                  user.ID,
+				"email":               user.Email,
+				"subscription_active": subActive.Bool,
+				"plan_type":           planType.String,
 			},
 		})
 	}

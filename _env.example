@@ -28,3 +28,17 @@ SSH_DEPLOY_HOST=grimlock@web1
 DEPLOY_BIN_PATH=/var/www/vhosts/api-shopfiy-price-tracker.truvis.co/bin
 DEPLOY_LOG_PATH=/var/www/vhosts/api-shopfiy-price-tracker.truvis.co/logs
 DEPLOY_CONFIG_PATH=/etc/api-shopfiy-price-tracker.truvis.co/config.ini
+
+
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=replace_me
+MODEL=nvidia/nemotron-3-nano-30b-a3b:free
+# NVIDIA API key — get yours at https://integrate.api.nvidia.com
+NVIDIA_API_KEY=replace_me
+
+# Model to use (any NVIDIA-hosted model)
+#MODEL=moonshotai/kimi-k2.5
+
+# Generation parameters
+MAX_TOKENS=16384
+TEMPERATURE=1.0
