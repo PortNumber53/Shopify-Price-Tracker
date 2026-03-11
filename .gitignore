@@ -18,7 +18,13 @@ coverage.*
 profile.cov
 
 # Dependency directories (remove the comment below to include it)
+node_modules/
+dist/
 # vendor/
+
+# specific paths
+scraper/node_modules/
+backend/tmp/main
 
 # Go workspace file
 go.work
@@ -26,6 +32,13 @@ go.work.sum
 
 # env file
 .env
+.wrangler/
+.DS_Store
+*.log
+
+# build artifacts
+backend/bin/
+backend/tmp/
 
 # Editor/IDE
 # .idea/

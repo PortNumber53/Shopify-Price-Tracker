@@ -1,0 +1,30 @@
+# Frontend (Vite + React)
+VITE_PORT=20910
+VITE_PUBLIC_API_BASE_URL=http://localhost:20911
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_replace_me
+
+# Backend (Go + Gin)
+PORT=20911
+GIN_MODE=debug
+DATABASE_URL=postgres://user:pass@localhost:5432/shopify_price_tracker?sslmode=disable
+STRIPE_SECRET_KEY=sk_test_replace_me
+STRIPE_WEBHOOK_SECRET=whsec_replace_me
+STRIPE_METADATA_SAAS_ID=shopify_price_tracker
+STRIPE_PRICE_PRO=price_pro_replace_me
+STRIPE_PRICE_PREMIUM=price_premium_replace_me
+# plan_type must match plans.plan_type in PostgreSQL
+STRIPE_DEFAULT_PLAN_TYPE=base
+ALLOWED_ORIGINS=*
+LOG_DIR=/var/www/vhosts/api-shopfiy-price-tracker.truvis.co/logs
+CONFIG_PATH=/etc/api-shopfiy-price-tracker.truvis.co/config.ini
+
+# Cloudflare (Workers deploy)
+CLOUDFLARE_ACCOUNT_ID=replace_me
+CLOUDFLARE_API_TOKEN=replace_me_secret # store as Wrangler secret in CI/CD
+WRANGLER_PREVIEW_PORT=20912
+
+# Deployment (Jenkins/SSH)
+SSH_DEPLOY_HOST=grimlock@web1
+DEPLOY_BIN_PATH=/var/www/vhosts/api-shopfiy-price-tracker.truvis.co/bin
+DEPLOY_LOG_PATH=/var/www/vhosts/api-shopfiy-price-tracker.truvis.co/logs
+DEPLOY_CONFIG_PATH=/etc/api-shopfiy-price-tracker.truvis.co/config.ini
