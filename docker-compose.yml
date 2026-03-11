@@ -13,5 +13,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    restart: unless-stopped
+    environment:
+      - LOG_LEVEL=info
+      - CAPTCHA_SOLVER=none
+    ports:
+      - "8191:8191"
+
 volumes:
   postgres_data:

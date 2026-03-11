@@ -42,3 +42,6 @@ NVIDIA_API_KEY=replace_me
 # Generation parameters
 MAX_TOKENS=16384
 TEMPERATURE=1.0
+
+# FlareSolverr — CAPTCHA bypass proxy (run via docker compose)
+FLARESOLVERR_URL=http://localhost:8191/v1

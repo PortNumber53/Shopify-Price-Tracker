@@ -14,9 +14,14 @@ import (
 // ExtractPriceViaAI queries an LLM to find the exact price from the provided Markdown
 func ExtractPriceViaAI(cfg config.Config, domain, markdownContent string) (*float64, error) {
 	// Truncate the markdown if it's absurdly large, though Markdown should be much smaller than HTML
-	maxLen := 100000 
+	maxLen := 100000
 	if len(markdownContent) > maxLen {
 		markdownContent = markdownContent[:maxLen]
+	}
+
+	// If the content is suspiciously tiny it's probably an error/redirect page — skip early
+	if len(strings.TrimSpace(markdownContent)) < 100 {
+		return nil, fmt.Errorf("page content too short to contain a price (possible redirect or CAPTCHA)")
 	}
 
 	prompt := fmt.Sprintf(`Analyze the following Markdown extracted from an e-commerce product page hosted on '%s'.
@@ -114,6 +119,16 @@ Markdown Snippet:
 	}
 
 	log.Printf("[AI Extraction] AI returned raw text: %s", priceStr)
+
+	// Detect if the AI returned a CAPTCHA/error explanation instead of a price
+	lowerPrice := strings.ToLower(priceStr)
+	captchaKeywords := []string{"captcha", "snippet", "please provide", "i don't see", "i need to see", "not see any", "no price", "no information", "there is no"}
+	for _, kw := range captchaKeywords {
+		if strings.Contains(lowerPrice, kw) {
+			log.Printf("[AI Extraction] AI indicated CAPTCHA or missing content for %s", domain)
+			return nil, fmt.Errorf("AI detected CAPTCHA or blocked page for %s", domain)
+		}
+	}
 	
 	val, err := strconv.ParseFloat(priceStr, 64)
 	if err != nil {
