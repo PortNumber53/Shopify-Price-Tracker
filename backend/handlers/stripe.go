@@ -6,11 +6,13 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stripe/stripe-go/v76"
 	portalsession "github.com/stripe/stripe-go/v76/billingportal/session"
-	"github.com/stripe/stripe-go/v76/checkout/session"
+	checkoutsession "github.com/stripe/stripe-go/v76/checkout/session"
+	stripesubscription "github.com/stripe/stripe-go/v76/subscription"
 	"github.com/stripe/stripe-go/v76/webhook"
 	"github.com/truvis/shopify-price-tracker/backend/config"
 )
@@ -60,16 +62,16 @@ func CreateCheckoutSession(db *sql.DB, cfg config.Config) gin.HandlerFunc {
 					Quantity: stripe.Int64(1),
 				},
 			},
-			SuccessURL: stripe.String("http://localhost:20910/dashboard?session_id={CHECKOUT_SESSION_ID}"),
-			CancelURL:  stripe.String("http://localhost:20910/dashboard"),
-			CustomerEmail: stripe.String(email),
+			SuccessURL:        stripe.String(cfg.FrontendURL + "/dashboard?session_id={CHECKOUT_SESSION_ID}"),
+			CancelURL:         stripe.String(cfg.FrontendURL + "/dashboard"),
+			CustomerEmail:     stripe.String(email),
 			ClientReferenceID: stripe.String(userID),
 			Metadata: map[string]string{
 				"saas_id":   cfg.StripeSaaSID,
 				"plan_type": planType,
 				"user_id":   userID,
 			},
-		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
+			SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
 				Metadata: map[string]string{
 					"saas_id":   cfg.StripeSaaSID,
 					"plan_type": planType,
@@ -78,7 +80,7 @@ func CreateCheckoutSession(db *sql.DB, cfg config.Config) gin.HandlerFunc {
 			},
 		}
 
-		s, err := session.New(params)
+		s, err := checkoutsession.New(params)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create checkout session"})
 			return
@@ -108,7 +110,7 @@ func CreateCustomerPortalSession(db *sql.DB, cfg config.Config) gin.HandlerFunc 
 
 		params := &stripe.BillingPortalSessionParams{
 			Customer:  stripe.String(customerID.String),
-			ReturnURL: stripe.String("http://localhost:20910/subscription"),
+			ReturnURL: stripe.String(cfg.FrontendURL + "/subscription"),
 		}
 
 		s, err := portalsession.New(params)
@@ -133,8 +135,8 @@ func StripeWebhook(db *sql.DB, cfg config.Config) gin.HandlerFunc {
 		}
 
 		event, err := webhook.ConstructEventWithOptions(
-			payload, 
-			c.GetHeader("Stripe-Signature"), 
+			payload,
+			c.GetHeader("Stripe-Signature"),
 			cfg.StripeWebhookSecret,
 			webhook.ConstructEventOptions{
 				IgnoreAPIVersionMismatch: true,
@@ -169,25 +171,51 @@ func StripeWebhook(db *sql.DB, cfg config.Config) gin.HandlerFunc {
 	}
 }
 
-func handleCheckoutSessionCompleted(db *sql.DB, cfg config.Config, session stripe.CheckoutSession) {
-	userID := session.ClientReferenceID
+func handleCheckoutSessionCompleted(db *sql.DB, cfg config.Config, sess stripe.CheckoutSession) {
+	userID := sess.ClientReferenceID
 	if userID == "" {
 		log.Println("Webhook: no client_reference_id found")
 		return
 	}
 
-	planType := session.Metadata["plan_type"]
+	planType := sess.Metadata["plan_type"]
 	if planType == "" {
-		planType = "pro" // fallback if somehow missing
+		planType = "pro"
 	}
 
-	// Update the user record
+	newSubID := ""
+	if sess.Subscription != nil {
+		newSubID = sess.Subscription.ID
+	}
+
 	_, err := db.Exec(
-		"UPDATE users SET stripe_customer_id = $1, subscription_active = TRUE, plan_type = $2 WHERE id = $3",
-		session.Customer.ID, planType, userID,
+		"UPDATE users SET stripe_customer_id = $1, subscription_active = TRUE, plan_type = $2, stripe_subscription_id = $3 WHERE id = $4",
+		sess.Customer.ID, planType, newSubID, userID,
 	)
 	if err != nil {
 		log.Printf("Error updating user subscription state: %v", err)
+	}
+
+	// Handle plan switch: cancel the old subscription
+	switchMode := sess.Metadata["switch_mode"]
+	oldSubID := sess.Metadata["old_subscription_id"]
+	if oldSubID != "" && oldSubID != newSubID {
+		switch switchMode {
+		case "immediate":
+			if _, err := stripesubscription.Cancel(oldSubID, nil); err != nil {
+				log.Printf("Webhook: failed to cancel old subscription %s immediately: %v", oldSubID, err)
+			} else {
+				log.Printf("Webhook: cancelled old subscription %s immediately", oldSubID)
+			}
+		case "scheduled":
+			if _, err := stripesubscription.Update(oldSubID, &stripe.SubscriptionParams{
+				CancelAtPeriodEnd: stripe.Bool(true),
+			}); err != nil {
+				log.Printf("Webhook: failed to schedule cancellation of old subscription %s: %v", oldSubID, err)
+			} else {
+				log.Printf("Webhook: scheduled cancellation of old subscription %s at period end", oldSubID)
+			}
+		}
 	}
 }
 
@@ -209,11 +237,133 @@ func handleSubscriptionChange(db *sql.DB, cfg config.Config, subscription stripe
 		planType = "free"
 	}
 
+	periodEnd := time.Unix(subscription.CurrentPeriodEnd, 0)
+
 	_, err := db.Exec(
-		"UPDATE users SET subscription_active = $1, plan_type = $2 WHERE stripe_customer_id = $3",
-		isActive, planType, subscription.Customer.ID,
+		"UPDATE users SET subscription_active = $1, plan_type = $2, stripe_subscription_id = $3, subscription_period_end = $4 WHERE stripe_customer_id = $5",
+		isActive, planType, subscription.ID, periodEnd, subscription.Customer.ID,
 	)
 	if err != nil {
 		log.Printf("Error updating subscription status: %v", err)
+	}
+}
+
+func GetCurrentSubscription(db *sql.DB, cfg config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetString("userID")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		var subID sql.NullString
+		var periodEnd sql.NullTime
+		var planType string
+		var active bool
+		err := db.QueryRow(
+			"SELECT subscription_active, plan_type, stripe_subscription_id, subscription_period_end FROM users WHERE id = $1",
+			userID,
+		).Scan(&active, &planType, &subID, &periodEnd)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch subscription"})
+			return
+		}
+
+		var periodEndUnix int64
+		if periodEnd.Valid {
+			periodEndUnix = periodEnd.Time.Unix()
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"subscription_active": active,
+			"plan_type":           planType,
+			"subscription_id":     subID.String,
+			"period_end":          periodEndUnix,
+		})
+	}
+}
+
+func SwitchPlan(db *sql.DB, cfg config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetString("userID")
+		email := c.GetString("email")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		var req struct {
+			Plan      string `json:"plan"`
+			Immediate bool   `json:"immediate"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil || req.Plan == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "plan is required"})
+			return
+		}
+
+		stripe.Key = cfg.StripeSecretKey
+
+		var priceID string
+		err := db.QueryRow("SELECT stripe_price_id FROM plans WHERE plan_type = $1", req.Plan).Scan(&priceID)
+		if err != nil || priceID == "" {
+			priceID = "price_mock123"
+			log.Printf("Warning: No valid price ID for plan %s: %v", req.Plan, err)
+		}
+
+		var currentSubID sql.NullString
+		db.QueryRow("SELECT stripe_subscription_id FROM users WHERE id = $1", userID).Scan(&currentSubID)
+
+		// Determine switch mode and trial end
+		switchMode := "scheduled"
+		if req.Immediate {
+			switchMode = "immediate"
+		}
+
+		params := &stripe.CheckoutSessionParams{
+			PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+			Mode:               stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+			LineItems: []*stripe.CheckoutSessionLineItemParams{
+				{
+					Price:    stripe.String(priceID),
+					Quantity: stripe.Int64(1),
+				},
+			},
+			SuccessURL:        stripe.String(cfg.FrontendURL + "/subscription?switch=success"),
+			CancelURL:         stripe.String(cfg.FrontendURL + "/subscription"),
+			CustomerEmail:     stripe.String(email),
+			ClientReferenceID: stripe.String(userID),
+			Metadata: map[string]string{
+				"saas_id":             cfg.StripeSaaSID,
+				"plan_type":           req.Plan,
+				"user_id":             userID,
+				"switch_mode":         switchMode,
+				"old_subscription_id": currentSubID.String,
+			},
+			SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
+				Metadata: map[string]string{
+					"saas_id":   cfg.StripeSaaSID,
+					"plan_type": req.Plan,
+					"user_id":   userID,
+				},
+			},
+		}
+
+		// For scheduled switch: start new plan at the end of the current billing period
+		if !req.Immediate && currentSubID.Valid && currentSubID.String != "" {
+			sub, err := stripesubscription.Get(currentSubID.String, nil)
+			if err == nil && sub.CurrentPeriodEnd > 0 {
+				params.SubscriptionData.TrialEnd = stripe.Int64(sub.CurrentPeriodEnd)
+				log.Printf("SwitchPlan: scheduling new %s plan to start at %v (sub %s)", req.Plan, time.Unix(sub.CurrentPeriodEnd, 0), currentSubID.String)
+			}
+		}
+
+		s, err := checkoutsession.New(params)
+		if err != nil {
+			log.Printf("SwitchPlan: failed to create checkout session: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create switch checkout session"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"url": s.URL})
 	}
 }

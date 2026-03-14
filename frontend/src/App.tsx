@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Activity, LogOut, ChevronDown, User, CreditCard, LayoutDashboard } from 'lucide-react';
+import { AuthContext } from './context/AuthContext.tsx';
 
 import Login from './pages/Login.tsx';
 import Signup from './pages/Signup.tsx';
@@ -14,24 +15,46 @@ import HowItWorks from './pages/HowItWorks.tsx';
 import TermsOfService from './pages/TermsOfService.tsx';
 import PrivacyPolicy from './pages/PrivacyPolicy.tsx';
 
+const API_URL = (import.meta.env.VITE_PUBLIC_API_BASE_URL || 'http://localhost:20911').replace(/\/$/, '');
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setIsAuthenticated(true);
-    }
-  }, []);
-
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setIsAuthenticated(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    fetch(`${API_URL}/api/auth/me`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+      .then(res => {
+        if (res.status === 401) {
+          handleLogout();
+        } else if (res.ok) {
+          res.json().then(data => {
+            if (data.user) {
+              localStorage.setItem('user', JSON.stringify(data.user));
+            }
+            setIsAuthenticated(true);
+          });
+        } else {
+          setIsAuthenticated(true);
+        }
+      })
+      .catch(() => {
+        setIsAuthenticated(true);
+      });
+  }, [handleLogout]);
 
   return (
+    <AuthContext.Provider value={{ logout: handleLogout }}>
     <BrowserRouter>
       <header className="header">
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -140,6 +163,7 @@ function App() {
         </Routes>
       </main>
     </BrowserRouter>
+    </AuthContext.Provider>
   );
 }
 

@@ -85,5 +85,15 @@ func createTables(db *sql.DB) {
 		log.Fatal("Failed to create domain_selectors table:", err)
 	}
 
+	migrations := []string{
+		`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255)`,
+		`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_period_end TIMESTAMP WITH TIME ZONE`,
+	}
+	for _, m := range migrations {
+		if _, err := db.Exec(m); err != nil {
+			log.Printf("Migration warning: %v", err)
+		}
+	}
+
 	log.Println("Database tables initialized successfully")
 }

@@ -6,14 +6,15 @@ import (
 )
 
 type Config struct {
-	Port                string
-	GinMode             string
-	DatabaseURL         string
-	StripeSecretKey     string
-	StripeWebhookSecret string
+	Port                 string
+	GinMode              string
+	DatabaseURL          string
+	StripeSecretKey      string
+	StripeWebhookSecret  string
 	StripeWebhookURLPath string
 	StripeSaaSID         string
 	StripePlanType       string
+	FrontendURL          string
 	AllowedOrigins       string
 	OpenAIApiKey         string
 	LlmProvider          string
@@ -26,22 +27,23 @@ type Config struct {
 
 func LoadConfig() Config {
 	return Config{
-		Port:                getEnv("PORT", "20911"),
-		GinMode:             getEnv("GIN_MODE", "debug"),
-		DatabaseURL:         getEnv("DATABASE_URL", "postgres://user:pass@localhost:5432/shopify_price_tracker?sslmode=disable"),
-		StripeSecretKey:     getEnv("STRIPE_SECRET_KEY", "sk_test_replace_me"),
-		StripeWebhookSecret: getEnv("STRIPE_WEBHOOK_SECRET", "whsec_replace_me"),
+		Port:                 getEnv("PORT", "20911"),
+		GinMode:              getEnv("GIN_MODE", "debug"),
+		DatabaseURL:          getEnv("DATABASE_URL", "postgres://user:pass@localhost:5432/shopify_price_tracker?sslmode=disable"),
+		StripeSecretKey:      getEnv("STRIPE_SECRET_KEY", "sk_test_replace_me"),
+		StripeWebhookSecret:  getEnv("STRIPE_WEBHOOK_SECRET", "whsec_replace_me"),
 		StripeWebhookURLPath: getEnv("STRIPE_WEBHOOK_URL_PATH", "/api/stripe/webhook"),
 		StripeSaaSID:         getEnv("STRIPE_METADATA_SAAS_ID", "shopify_price_tracker"),
 		StripePlanType:       getEnv("STRIPE_DEFAULT_PLAN_TYPE", "base"),
-		AllowedOrigins:      getEnv("ALLOWED_ORIGINS", "*"),
-		OpenAIApiKey:        getEnv("OPENAI_API_KEY", ""),
-		LlmProvider:         getEnv("LLM_PROVIDER", "openai"),
-		OpenRouterApiKey:    getEnv("OPENROUTER_API_KEY", ""),
-		NvidiaApiKey:        getEnv("NVIDIA_API_KEY", ""),
-		LlmModel:            getEnv("MODEL", "gpt-4o-mini"),
-		MaxTokens:           getEnvAsInt("MAX_TOKENS", 1024),
-		Temperature:         getEnvAsFloat32("TEMPERATURE", 0.0),
+		FrontendURL:          getEnv("FRONTEND_URL", "http://localhost:20910"),
+		AllowedOrigins:       getEnv("ALLOWED_ORIGINS", "*"),
+		OpenAIApiKey:         getEnv("OPENAI_API_KEY", ""),
+		LlmProvider:          getEnv("LLM_PROVIDER", "openai"),
+		OpenRouterApiKey:     getEnv("OPENROUTER_API_KEY", ""),
+		NvidiaApiKey:         getEnv("NVIDIA_API_KEY", ""),
+		LlmModel:             getEnv("MODEL", "gpt-4o-mini"),
+		MaxTokens:            getEnvAsInt("MAX_TOKENS", 1024),
+		Temperature:          getEnvAsFloat32("TEMPERATURE", 0.0),
 	}
 }
 

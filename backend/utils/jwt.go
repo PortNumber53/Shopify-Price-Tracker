@@ -2,13 +2,18 @@ package utils
 
 import (
 	"errors"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// In a real app, use a strong secret from env variables
-var jwtSecret = []byte("super-secret-key-change-me-in-prod")
+var jwtSecret = func() []byte {
+	if s := os.Getenv("JWT_SECRET"); s != "" {
+		return []byte(s)
+	}
+	return []byte("super-secret-key-change-me-in-prod")
+}()
 
 type Claims struct {
 	UserID string `json:"user_id"`
@@ -17,7 +22,7 @@ type Claims struct {
 }
 
 func GenerateToken(userID, email string) (string, error) {
-	expirationTime := time.Now().Add(24 * time.Hour)
+	expirationTime := time.Now().Add(7 * 24 * time.Hour)
 	claims := &Claims{
 		UserID: userID,
 		Email:  email,

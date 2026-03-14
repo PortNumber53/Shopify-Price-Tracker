@@ -76,12 +76,14 @@ func main() {
 		webhookPath = "/api/stripe/webhook"
 	}
 	r.POST(webhookPath, handlers.StripeWebhook(database, cfg))
-	
+
 	stripeAuth := r.Group("/api/stripe")
 	stripeAuth.Use(middleware.AuthMiddleware())
 	{
 		stripeAuth.POST("/checkout", handlers.CreateCheckoutSession(database, cfg))
 		stripeAuth.POST("/portal", handlers.CreateCustomerPortalSession(database, cfg))
+		stripeAuth.GET("/subscription", handlers.GetCurrentSubscription(database, cfg))
+		stripeAuth.POST("/switch-plan", handlers.SwitchPlan(database, cfg))
 	}
 
 	// Start Background Workers
