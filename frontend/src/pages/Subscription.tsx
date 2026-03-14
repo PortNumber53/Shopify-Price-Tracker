@@ -1,7 +1,34 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, ExternalLink, Activity } from 'lucide-react';
+import { CreditCard, ExternalLink, Check, Zap } from 'lucide-react';
 
 const API_URL = (import.meta.env.VITE_PUBLIC_API_BASE_URL || 'http://localhost:20911').replace(/\/$/, '');
+
+const PLANS = [
+  {
+    key: 'free',
+    name: 'Free',
+    price: '$0',
+    period: '/mo',
+    features: ['1 URL tracker', 'Daily price checks', 'Email alerts', '7-day history'],
+    highlighted: false,
+  },
+  {
+    key: 'pro',
+    name: 'Pro',
+    price: '$19',
+    period: '/mo',
+    features: ['25 URL trackers', 'Hourly price checks', 'Instant email alerts', '30-day history', 'Price change dashboard'],
+    highlighted: true,
+  },
+  {
+    key: 'premium',
+    name: 'Premium',
+    price: '$50',
+    period: '/mo',
+    features: ['100 URL trackers', 'Real-time price checks', 'Instant email alerts', 'Unlimited history', 'Priority support', 'Dedicated parsing engine'],
+    highlighted: false,
+  },
+];
 
 export default function Subscription() {
   const [user, setUser] = useState<any>(null);
@@ -32,7 +59,7 @@ export default function Subscription() {
       setLoading(true);
       const res = await fetch(`${API_URL}/api/stripe/checkout`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
@@ -69,104 +96,127 @@ export default function Subscription() {
 
   if (!user) return null;
 
-  const getPlanName = () => {
-    if (!user.subscription_active) return 'Free (1 Tracker)';
-    if (user.plan_type === 'premium') return 'Premium ($50/mo)';
-    return 'Pro ($19/mo)';
+  const activePlanKey = !user.subscription_active
+    ? 'free'
+    : (user.plan_type === 'premium' ? 'premium' : 'pro');
+
+  const getPlanLabel = () => {
+    if (!user.subscription_active) return 'Free';
+    if (user.plan_type === 'premium') return 'Premium — $50/mo';
+    return 'Pro — $19/mo';
   };
 
   return (
-    <div className="container" style={{ padding: '4rem 1.5rem', flex: 1, textAlign: 'center' }}>
-      <div className="glass-card" style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
+    <div className="container" style={{ padding: '3rem 1.5rem', flex: 1 }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+
+        {/* ── Page header ─────────────────────────────────── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-          <CreditCard size={28} color="var(--primary)" />
+          <CreditCard size={26} color="var(--primary)" />
           <h2 style={{ margin: 0 }}>Subscription & Billing</h2>
         </div>
 
-        <div style={{ marginBottom: '2.5rem', padding: '1.5rem', background: 'var(--bg-glass)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
-          <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Current Plan</h3>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Status</span>
-            <span style={{ fontWeight: 600, padding: '0.25rem 0.75rem', borderRadius: '100px', background: user.subscription_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: user.subscription_active ? 'var(--success)' : 'var(--danger)' }}>
+        {/* ── Current plan summary ─────────────────────────── */}
+        <div className="glass-card" style={{ marginBottom: '2.5rem', padding: '1.5rem 2rem' }}>
+          <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Plan</h3>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.9375rem' }}>Status</span>
+            <span style={{
+              fontWeight: 600, fontSize: '0.8125rem', padding: '0.25rem 0.75rem', borderRadius: '100px',
+              background: user.subscription_active ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.1)',
+              color: user.subscription_active ? 'var(--success)' : 'var(--danger)'
+            }}>
               {user.subscription_active ? 'Active' : 'Inactive'}
             </span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Plan</span>
-            <span style={{ fontWeight: 600 }}>{getPlanName()}</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.9375rem' }}>Plan</span>
+            <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{getPlanLabel()}</span>
           </div>
-          
+
           {user.subscription_active && (
             <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-light)' }}>
-              <button onClick={handlePortal} className="btn btn-outline" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }} disabled={loading}>
-                <ExternalLink size={18} />
-                {loading ? 'Redirecting...' : 'Manage Subscription & Invoices'}
+              <button
+                onClick={handlePortal}
+                className="btn btn-outline"
+                style={{ width: '100%', justifyContent: 'center' }}
+                disabled={loading}
+              >
+                <ExternalLink size={16} />
+                {loading ? 'Redirecting…' : 'Manage Subscription & Invoices'}
               </button>
             </div>
           )}
         </div>
 
-        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', textAlign: 'center' }}>Available Plans</h3>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
-          {/* Free Plan */}
-          <div style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-light)', background: !user.subscription_active ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-glass)', display: 'flex', flexDirection: 'column' }}>
-            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.125rem' }}>Free</h4>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>$0<span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>/mo</span></div>
-            <ul style={{ padding: 0, margin: '0 0 1.5rem 0', listStyle: 'none', color: 'var(--text-muted)', fontSize: '0.875rem', flex: 1 }}>
-              <li style={{ marginBottom: '0.5rem' }}>✓ 1 Tracker Match</li>
-              <li style={{ marginBottom: '0.5rem' }}>✓ Daily Sync</li>
-              <li style={{ marginBottom: '0.5rem' }}>✓ Limited Price History</li>
-            </ul>
-            <button className="btn btn-outline" style={{ width: '100%' }} disabled>
-              {!user.subscription_active ? 'Current Plan' : 'Downgrade (via Portal)'}
-            </button>
-          </div>
+        {/* ── Plans grid ───────────────────────────────────── */}
+        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.125rem', textAlign: 'center' }}>Choose a plan</h3>
 
-          {/* Pro Plan */}
-          <div style={{ padding: '1.5rem', borderRadius: '12px', border: user.plan_type === 'pro' && user.subscription_active ? '2px solid var(--primary)' : '1px solid var(--border-light)', background: user.plan_type === 'pro' && user.subscription_active ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-glass)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-            {user.plan_type === 'pro' && user.subscription_active && (
-              <span style={{ position: 'absolute', top: '-10px', right: '1.5rem', background: 'var(--primary)', color: 'white', fontSize: '0.75rem', padding: '0.125rem 0.5rem', borderRadius: '100px', fontWeight: 600 }}>Active</span>
-            )}
-            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.125rem' }}>Pro</h4>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>$19<span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>/mo</span></div>
-            <ul style={{ padding: 0, margin: '0 0 1.5rem 0', listStyle: 'none', color: 'var(--text-muted)', fontSize: '0.875rem', flex: 1 }}>
-              <li style={{ marginBottom: '0.5rem' }}>✓ 25 Tracker Matches</li>
-              <li style={{ marginBottom: '0.5rem' }}>✓ Automatic Price Alerts</li>
-              <li style={{ marginBottom: '0.5rem' }}>✓ Full Price History</li>
-            </ul>
-            {user.plan_type === 'pro' && user.subscription_active ? (
-              <button className="btn btn-outline" style={{ width: '100%' }} disabled>Current Plan</button>
-            ) : (
-              <button onClick={() => user.subscription_active ? handlePortal() : handleCheckout('pro')} className="btn btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }} disabled={loading}>
-                <Activity size={16} /> {user.subscription_active ? 'Change Plan' : 'Subscribe'}
-              </button>
-            )}
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
+          {PLANS.map(plan => {
+            const isCurrent = activePlanKey === plan.key;
 
-          {/* Premium Plan */}
-          <div style={{ padding: '1.5rem', borderRadius: '12px', border: user.plan_type === 'premium' && user.subscription_active ? '2px solid var(--primary)' : '1px solid var(--border-light)', background: user.plan_type === 'premium' && user.subscription_active ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-glass)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-            {user.plan_type === 'premium' && user.subscription_active && (
-              <span style={{ position: 'absolute', top: '-10px', right: '1.5rem', background: 'var(--primary)', color: 'white', fontSize: '0.75rem', padding: '0.125rem 0.5rem', borderRadius: '100px', fontWeight: 600 }}>Active</span>
-            )}
-            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.125rem' }}>Premium</h4>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>$50<span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>/mo</span></div>
-            <ul style={{ padding: 0, margin: '0 0 1.5rem 0', listStyle: 'none', color: 'var(--text-muted)', fontSize: '0.875rem', flex: 1 }}>
-              <li style={{ marginBottom: '0.5rem' }}>✓ 100 Tracker Matches</li>
-              <li style={{ marginBottom: '0.5rem' }}>✓ Priority Support</li>
-              <li style={{ marginBottom: '0.5rem' }}>✓ Dedicated Parsing Engine</li>
-            </ul>
-            {user.plan_type === 'premium' && user.subscription_active ? (
-              <button className="btn btn-outline" style={{ width: '100%' }} disabled>Current Plan</button>
-            ) : (
-              <button onClick={() => user.subscription_active ? handlePortal() : handleCheckout('premium')} className={!user.subscription_active ? "btn btn-outline" : "btn btn-primary"} style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }} disabled={loading}>
-                <Activity size={16} /> {user.subscription_active ? 'Change Plan' : 'Subscribe'}
-              </button>
-            )}
-          </div>
+            return (
+              <div key={plan.key} style={{
+                padding: '1.75rem',
+                borderRadius: '16px',
+                border: isCurrent ? '2px solid var(--primary)' : plan.highlighted ? '1px solid rgba(79, 70, 229, 0.4)' : '1px solid var(--border-light)',
+                background: isCurrent ? 'rgba(79, 70, 229, 0.07)' : 'var(--bg-card)',
+                backdropFilter: 'blur(12px)',
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative',
+              }}>
+                {isCurrent && (
+                  <span style={{ position: 'absolute', top: '-12px', right: '1.25rem', background: 'var(--primary)', color: 'white', fontSize: '0.7rem', padding: '0.2rem 0.625rem', borderRadius: '100px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Current
+                  </span>
+                )}
+
+                <h4 style={{ margin: '0 0 0.25rem', fontSize: '1.125rem' }}>{plan.name}</h4>
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <span style={{ fontSize: '2.25rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-main)' }}>{plan.price}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{plan.period}</span>
+                </div>
+
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.75rem', display: 'flex', flexDirection: 'column', gap: '0.625rem', flex: 1 }}>
+                  {plan.features.map(f => (
+                    <li key={f} style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-start', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                      <Check size={14} color="var(--success)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+
+                {isCurrent ? (
+                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', opacity: 0.6 }} disabled>
+                    Current Plan
+                  </button>
+                ) : plan.key === 'free' ? (
+                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }} onClick={handlePortal} disabled={loading}>
+                    {loading ? 'Redirecting…' : 'Downgrade (via Portal)'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => user.subscription_active ? handlePortal() : handleCheckout(plan.key)}
+                    className={plan.highlighted ? 'btn btn-primary' : 'btn btn-outline'}
+                    style={{ width: '100%', justifyContent: 'center' }}
+                    disabled={loading}
+                  >
+                    <Zap size={15} />
+                    {loading ? 'Redirecting…' : user.subscription_active ? 'Switch Plan' : `Subscribe — ${plan.price}/mo`}
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
+
+        <p style={{ textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '1.5rem' }}>
+          All paid plans include a 14-day free trial. Cancel anytime through the billing portal.
+        </p>
       </div>
     </div>
   );
