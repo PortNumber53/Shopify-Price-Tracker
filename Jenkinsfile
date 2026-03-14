@@ -17,6 +17,7 @@ pipeline {
         STRIPE_SECRET_KEY = credentials('stripe-secret-key-shopify-price-tracker')
         STRIPE_WEBHOOK_SECRET = credentials('stripe-webhook-secret-shopify-price-tracker')
         STRIPE_WEBHOOK_URL_PATH = credentials('stripe-webhook-url-path-shopify-price-tracker')
+        JWT_SECRET = credentials('jwt-secret-shopify-price-tracker')
     }
 
     stages {
@@ -62,6 +63,7 @@ pipeline {
 PORT=20911
 GIN_MODE=release
 DATABASE_URL=${DB_URL}
+JWT_SECRET=${JWT_SECRET}
 STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
 STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
 STRIPE_METADATA_SAAS_ID=shopify_price_tracker
