@@ -1,25 +1,25 @@
 import { Link } from 'react-router-dom';
-import { Eye, Bell, TrendingDown, ArrowRight, Check } from 'lucide-react';
+import { Eye, Bell, TrendingDown, ArrowRight, Check, Activity } from 'lucide-react';
 
 const FEATURES = [
   {
     icon: Eye,
     color: 'var(--primary)',
-    bg: 'rgba(79, 70, 229, 0.12)',
+    bg: 'rgba(37, 99, 235, 0.08)',
     title: 'Real-time Monitoring',
     description: 'Track competitor product URLs with automatic price checks. Hourly checks on Pro and Premium plans.',
   },
   {
     icon: Bell,
     color: 'var(--success)',
-    bg: 'rgba(16, 185, 129, 0.12)',
+    bg: 'rgba(22, 163, 74, 0.08)',
     title: 'Instant Alerts',
     description: 'Get email notifications the moment a competitor changes their price. React faster than the competition.',
   },
   {
     icon: TrendingDown,
-    color: '#EAB308',
-    bg: 'rgba(234, 179, 8, 0.12)',
+    color: '#D97706',
+    bg: 'rgba(217, 119, 6, 0.08)',
     title: 'Price History',
     description: 'See previous prices and track percentage changes over time. Make data-driven pricing decisions.',
   },
@@ -74,7 +74,7 @@ export default function Landing() {
       {/* ── Hero ─────────────────────────────────────────── */}
       <section style={{ padding: '5rem 1.5rem 4.5rem', textAlign: 'center' }}>
         <div style={{ maxWidth: '860px', margin: '0 auto' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', borderRadius: '100px', border: '1px solid var(--border-light)', background: 'rgba(79, 70, 229, 0.08)', padding: '0.375rem 1rem', fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '2rem' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', borderRadius: '100px', border: '1px solid var(--border-light)', background: 'rgba(37, 99, 235, 0.06)', padding: '0.375rem 1rem', fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '2rem' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)', display: 'inline-block', flexShrink: 0 }} />
             Now tracking 10,000+ products
           </div>
@@ -92,15 +92,15 @@ export default function Landing() {
             <Link to="/signup" className="btn btn-primary" style={{ padding: '0.875rem 2rem', fontSize: '1rem', textDecoration: 'none' }}>
               Start Tracking Free <ArrowRight size={18} />
             </Link>
-            <a href="#how-it-works" className="btn btn-outline" style={{ padding: '0.875rem 2rem', fontSize: '1rem', textDecoration: 'none' }}>
+            <Link to="/how-it-works" className="btn btn-outline" style={{ padding: '0.875rem 2rem', fontSize: '1rem', textDecoration: 'none' }}>
               See How It Works
-            </a>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* ── Features ─────────────────────────────────────── */}
-      <section id="features" style={{ padding: '5rem 1.5rem', borderTop: '1px solid var(--border-light)', background: 'rgba(15, 23, 42, 0.5)' }}>
+      <section id="features" style={{ padding: '5rem 1.5rem', borderTop: '1px solid var(--border-light)', background: 'var(--bg-card)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
             <h2 style={{ fontSize: '2.25rem', marginBottom: '1rem' }}>Everything you need to stay competitive</h2>
@@ -144,7 +144,7 @@ export default function Landing() {
       </section>
 
       {/* ── Pricing ──────────────────────────────────────── */}
-      <section id="pricing" style={{ padding: '5rem 1.5rem', borderTop: '1px solid var(--border-light)', background: 'rgba(15, 23, 42, 0.5)' }}>
+      <section id="pricing" style={{ padding: '5rem 1.5rem', borderTop: '1px solid var(--border-light)', background: 'var(--bg-card)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
             <h2 style={{ fontSize: '2.25rem', marginBottom: '1rem' }}>Simple, transparent pricing</h2>
@@ -157,8 +157,8 @@ export default function Landing() {
                 padding: '2rem',
                 borderRadius: '16px',
                 border: plan.highlighted ? '2px solid var(--primary)' : '1px solid var(--border-light)',
-                background: plan.highlighted ? 'rgba(79, 70, 229, 0.08)' : 'var(--bg-card)',
-                backdropFilter: 'blur(12px)',
+                background: plan.highlighted ? 'rgba(37, 99, 235, 0.05)' : 'var(--bg-card)',
+                boxShadow: plan.highlighted ? '0 4px 24px rgba(37, 99, 235, 0.12)' : '0 1px 3px rgba(0,0,0,0.06)',
                 position: 'relative',
                 display: 'flex',
                 flexDirection: 'column',
@@ -201,19 +201,21 @@ export default function Landing() {
       </section>
 
       {/* ── Footer ───────────────────────────────────────── */}
-      <footer style={{ padding: '2.5rem 1.5rem', borderTop: '1px solid var(--border-light)', background: 'rgba(15, 23, 42, 0.8)' }}>
+      <footer style={{ padding: '2.5rem 1.5rem', borderTop: '1px solid var(--border-light)', background: 'var(--bg-glass)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Eye size={16} color="white" />
-            </div>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+            <Activity size={20} color="var(--primary)" />
             <span style={{ fontWeight: 600, fontSize: '1.0625rem', color: 'var(--text-main)' }}>Competitor Tracker</span>
+          </Link>
+
+          <div style={{ display: 'flex', gap: '1.75rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Link to="/features" style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Features</Link>
+            <Link to="/pricing" style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Pricing</Link>
+            <Link to="/how-it-works" style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textDecoration: 'none' }}>How it works</Link>
+            <Link to="/terms" style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Terms</Link>
+            <Link to="/privacy" style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Privacy</Link>
           </div>
-          <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-            <a href="#features" style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Features</a>
-            <a href="#pricing" style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Pricing</a>
-            <a href="#how-it-works" style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textDecoration: 'none' }}>How it works</a>
-          </div>
+
           <p style={{ marginBottom: 0, fontSize: '0.875rem', color: 'var(--text-muted)' }}>© {new Date().getFullYear()} Competitor Tracker. All rights reserved.</p>
         </div>
       </footer>

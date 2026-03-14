@@ -8,6 +8,11 @@ import Dashboard from './pages/Dashboard.tsx';
 import Landing from './pages/Landing.tsx';
 import Profile from './pages/Profile.tsx';
 import Subscription from './pages/Subscription.tsx';
+import Features from './pages/Features.tsx';
+import Pricing from './pages/Pricing.tsx';
+import HowItWorks from './pages/HowItWorks.tsx';
+import TermsOfService from './pages/TermsOfService.tsx';
+import PrivacyPolicy from './pages/PrivacyPolicy.tsx';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -44,7 +49,7 @@ function App() {
                 <button 
                   onClick={() => setDropdownOpen(!dropdownOpen)} 
                   className="btn btn-outline" 
-                  style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-glass)' }}
+                  style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <User size={18} />
                   Account
@@ -57,7 +62,7 @@ function App() {
                     top: '100%', 
                     right: 0, 
                     marginTop: '0.5rem',
-                    background: 'var(--bg-card)', 
+                    background: 'var(--bg-card)',
                     border: '1px solid var(--border-light)',
                     borderRadius: '8px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
@@ -70,8 +75,8 @@ function App() {
                         to="/dashboard" 
                         onClick={() => setDropdownOpen(false)}
                         style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-main)', textDecoration: 'none', borderBottom: '1px solid var(--border-light)' }}
-                        onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-glass)'}
-                        onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                        onMouseOver={(e) => (e.currentTarget.style.background = 'var(--bg-glass)')}
+                        onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
                         <LayoutDashboard size={16} /> Dashboard
                       </Link>
@@ -79,8 +84,8 @@ function App() {
                         to="/profile" 
                         onClick={() => setDropdownOpen(false)}
                         style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-main)', textDecoration: 'none', borderBottom: '1px solid var(--border-light)' }}
-                        onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-glass)'}
-                        onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                        onMouseOver={(e) => (e.currentTarget.style.background = 'var(--bg-glass)')}
+                        onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
                         <User size={16} /> Profile
                       </Link>
@@ -88,16 +93,16 @@ function App() {
                         to="/subscription" 
                         onClick={() => setDropdownOpen(false)}
                         style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-main)', textDecoration: 'none', borderBottom: '1px solid var(--border-light)' }}
-                        onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-glass)'}
-                        onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                        onMouseOver={(e) => (e.currentTarget.style.background = 'var(--bg-glass)')}
+                        onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
                         <CreditCard size={16} /> Subscription
                       </Link>
                       <button 
                         onClick={() => { setDropdownOpen(false); handleLogout(); }} 
                         style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', fontSize: '1rem', fontFamily: 'inherit' }}
-                        onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                        onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                        onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(220, 38, 38, 0.06)')}
+                        onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
                         <LogOut size={16} /> Log out
                       </button>
@@ -108,8 +113,11 @@ function App() {
             </div>
             ) : (
               <>
-                <Link to="/login" style={{ color: 'var(--text-main)', textDecoration: 'none', fontWeight: 600 }}>Log In</Link>
-                <Link to="/signup" className="btn btn-primary" style={{ padding: '0.5rem 1rem', textDecoration: 'none' }}>Sign Up</Link>
+                <Link to="/features" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontWeight: 500, fontSize: '0.9375rem' }}>Features</Link>
+                <Link to="/pricing" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontWeight: 500, fontSize: '0.9375rem' }}>Pricing</Link>
+                <Link to="/how-it-works" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontWeight: 500, fontSize: '0.9375rem' }}>How it works</Link>
+                <Link to="/login" style={{ color: 'var(--text-main)', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
+                <Link to="/signup" className="btn btn-primary" style={{ padding: '0.5rem 1rem', textDecoration: 'none' }}>Get Started</Link>
               </>
             )}
           </nav>
@@ -119,6 +127,11 @@ function App() {
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/login" element={!isAuthenticated ? <Login setAuth={setIsAuthenticated} /> : <Navigate to="/dashboard" />} />
           <Route path="/signup" element={!isAuthenticated ? <Signup setAuth={setIsAuthenticated} /> : <Navigate to="/dashboard" />} />
           <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} />
