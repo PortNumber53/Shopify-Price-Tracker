@@ -11,7 +11,7 @@ pipeline {
         CLOUDFLARE_API_TOKEN = credentials('cloudflare-api-token')
 
         // App Secrets bound in environment credentials
-        DB_URL = credentials('database-url-shopify-price-tracker')
+        DATABASE_URL = credentials('database-url-shopify-price-tracker')
         BACKEND_URL = credentials('backend-url-shopify-price-tracker')
         FRONTEND_URL = credentials('frontend-url-shopify-price-tracker')
         STRIPE_SECRET_KEY = credentials('stripe-secret-key-shopify-price-tracker')
@@ -62,13 +62,14 @@ pipeline {
                 sh '''cat <<EOF > backend/config.ini
 PORT=20911
 GIN_MODE=release
-DATABASE_URL=${DB_URL}
+DATABASE_URL=${DATABASE_URL}
 JWT_SECRET=${JWT_SECRET}
 STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
 STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
 STRIPE_METADATA_SAAS_ID=shopify_price_tracker
 STRIPE_WEBHOOK_URL_PATH=${STRIPE_WEBHOOK_URL_PATH}
 STRIPE_DEFAULT_PLAN_TYPE=base
+FRONTEND_URL=${FRONTEND_URL}
 ALLOWED_ORIGINS=${FRONTEND_URL}
 LOG_DIR=${DEPLOY_DIR_LOGS}
 CONFIG_PATH=/etc/api-shopfiy-price-tracker.truvis.co/config.ini
