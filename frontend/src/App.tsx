@@ -18,7 +18,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy.tsx';
 const API_URL = (import.meta.env.VITE_PUBLIC_API_BASE_URL || 'http://localhost:20911').replace(/\/$/, '');
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleLogout = useCallback(() => {

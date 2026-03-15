@@ -151,7 +151,7 @@ export default function Landing() {
             <p style={{ color: 'var(--text-muted)', fontSize: '1.0625rem' }}>Start free, scale as you grow. Cancel anytime.</p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', alignItems: 'stretch' }}>
             {PLANS.map(plan => (
               <div key={plan.name} style={{
                 padding: '2rem',

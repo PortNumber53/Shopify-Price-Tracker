@@ -294,7 +294,7 @@ export default function Subscription() {
           {user.subscription_active ? 'Switch plan' : 'Choose a plan'}
         </h3>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', alignItems: 'stretch' }}>
           {PLANS.map(plan => {
             const isCurrent = activePlanKey === plan.key;
 

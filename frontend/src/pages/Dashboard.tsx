@@ -45,7 +45,6 @@ export default function Dashboard() {
 
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const [isSubscribed, setIsSubscribed] = useState(true);
   const [maxTrackers, setMaxTrackers] = useState(1);
 
   useEffect(() => {
@@ -59,9 +58,6 @@ export default function Dashboard() {
     };
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user && user.subscription_active === false) {
-      setIsSubscribed(false);
-    }
     updateMaxTrackers(user);
 
     const token = localStorage.getItem('token');
@@ -73,7 +69,6 @@ export default function Dashboard() {
         .then(data => {
           if (data.user) {
             localStorage.setItem('user', JSON.stringify(data.user));
-            setIsSubscribed(data.user.subscription_active !== false);
             updateMaxTrackers(data.user);
           }
         })
@@ -167,21 +162,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleSubscribe = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/stripe/checkout`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const handleSync = async () => {
     setIsSyncing(true);
     const triggeredAt = new Date();
@@ -219,23 +199,6 @@ export default function Dashboard() {
       setIsSyncing(false);
     }
   };
-
-  if (!isSubscribed) {
-    return (
-      <div className="container" style={{ padding: '4rem 1.5rem', flex: 1, textAlign: 'center' }}>
-        <div className="glass-card" style={{ maxWidth: '520px', margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(79, 70, 229, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-            <Activity size={28} color="var(--primary)" />
-          </div>
-          <h2 style={{ marginBottom: '0.75rem' }}>Subscription Required</h2>
-          <p style={{ marginBottom: '2rem' }}>Subscribe to start monitoring competitor prices automatically.</p>
-          <button onClick={handleSubscribe} className="btn btn-primary" style={{ width: '100%' }}>
-            View Plans & Subscribe
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container" style={{ padding: '2rem 1.5rem', flex: 1 }}>
@@ -343,6 +306,7 @@ export default function Dashboard() {
           {urls.map(url => {
             const change = priceChange(url.last_price, url.previous_price);
             const isActive = url.last_price > 0;
+            const wasChecked = !!url.last_checked;
             const checkedAt = url.last_checked || url.created_at;
 
             return (
@@ -368,7 +332,12 @@ export default function Dashboard() {
                     {/* Price */}
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                        {isActive ? `$${url.last_price.toFixed(2)}` : <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '0.9rem' }}>Pending…</span>}
+                        {isActive
+                          ? `$${url.last_price.toFixed(2)}`
+                          : wasChecked
+                            ? <span style={{ color: 'var(--danger)', fontWeight: 400, fontSize: '0.9rem' }} title="Price could not be extracted — site may be blocking the scraper">Unavailable</span>
+                            : <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '0.9rem' }}>Pending…</span>
+                        }
                       </div>
                       {url.previous_price != null && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', justifyContent: 'flex-end', fontSize: '0.8125rem', marginTop: '0.125rem' }}>
@@ -389,10 +358,12 @@ export default function Dashboard() {
                     </div>
 
                     {/* Timestamp */}
-                    <div style={{ textAlign: 'right', fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'none' }} className="hide-mobile">
-                      <span style={{ display: 'block' }}>Checked</span>
-                      <span>{timeAgo(checkedAt)}</span>
-                    </div>
+                    {url.last_checked && (
+                      <div style={{ textAlign: 'right', fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'none' }} className="hide-mobile">
+                        <span style={{ display: 'block' }}>Checked</span>
+                        <span>{timeAgo(checkedAt)}</span>
+                      </div>
+                    )}
 
                     {/* Actions */}
                     <div style={{ display: 'flex', gap: '0.375rem' }}>

@@ -120,6 +120,15 @@ func scrapeURL(db *sql.DB, cfg config.Config, id, urlStr, productName, lastPrice
 	currentPrice := *extractedPrice
 	log.Printf("[Scraper] Extracted price for %s: %.2f", productName, currentPrice)
 
+	if currentPrice <= 0 {
+		log.Printf("[Scraper] Extracted price is invalid (%.2f) for %s — stamping last_checked only", currentPrice, urlStr)
+		_, err = db.Exec("UPDATE tracked_urls SET last_checked = NOW() WHERE id = $1", id)
+		if err != nil {
+			log.Printf("[Scraper] Failed to stamp last_checked for %s: %v", urlStr, err)
+		}
+		return
+	}
+
 	// Save to history
 	_, err = db.Exec("INSERT INTO price_logs (url_id, price) VALUES ($1, $2)", id, currentPrice)
 	if err != nil {
