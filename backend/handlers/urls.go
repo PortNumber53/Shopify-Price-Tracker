@@ -176,7 +176,7 @@ func SyncURLs(db *sql.DB, cfg config.Config) gin.HandlerFunc {
 		}
 
 		// Because the scraper is async and runs in background
-		go services.TriggerScrape(db, cfg)
+		go services.TriggerScrape(db, cfg, true)
 
 		c.JSON(http.StatusAccepted, gin.H{"message": "Sync job triggered successfully. Prices will update shortly."})
 	}

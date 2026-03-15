@@ -19,7 +19,7 @@ const PLANS = [
     name: 'Pro',
     price: '$19',
     period: '/mo',
-    features: ['25 URL trackers', 'Hourly price checks', 'Instant email alerts', '30-day history', 'Price change dashboard'],
+    features: ['25 URL trackers', 'Price checks up to 4× daily', 'Instant email alerts', '30-day history', 'Price change dashboard'],
     highlighted: true,
   },
   {
@@ -27,7 +27,7 @@ const PLANS = [
     name: 'Premium',
     price: '$50',
     period: '/mo',
-    features: ['100 URL trackers', 'Real-time price checks', 'Instant email alerts', 'Unlimited history', 'Priority support', 'Dedicated parsing engine'],
+    features: ['100 URL trackers', 'Up to hourly price checks', 'Instant email alerts', 'Unlimited history', 'Priority support', 'Dedicated parsing engine'],
     highlighted: false,
   },
 ];

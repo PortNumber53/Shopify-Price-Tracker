@@ -23,7 +23,7 @@ const PLANS = [
     description: 'For active Shopify sellers',
     features: [
       '25 URL trackers',
-      'Hourly price checks',
+      'Price checks up to 4× daily',
       'Instant email alerts',
       '30-day price history',
       'Price change dashboard',
@@ -42,7 +42,7 @@ const PLANS = [
     description: 'For high-volume sellers',
     features: [
       '100 URL trackers',
-      'Real-time price checks',
+      'Up to hourly price checks',
       'Instant email alerts',
       'Unlimited price history',
       'Priority support',

@@ -29,43 +29,114 @@ var (
 	priceTextRegex = regexp.MustCompile(`[\$€£]\s?(\d+(?:,\d{3})*(?:\.\d{2})?)`)
 )
 
+const (
+	// Scheduler runs every 30 minutes to pick up due URLs.
+	schedulerInterval = 30 * time.Minute
+
+	// Max unique URLs scraped per scheduler tick to spread load.
+	maxURLsPerTick = 15
+
+	// Pause between individual URL scrapes within a single tick.
+	scrapeDelay = 3 * time.Second
+
+	// Per-plan check intervals.
+	freePlanInterval    = 24 * time.Hour
+	proPlanInterval     = 6 * time.Hour
+	premiumPlanInterval = 1 * time.Hour
+)
+
 func StartScraperWorker(db *sql.DB, cfg config.Config) {
-	ticker := time.NewTicker(24 * time.Hour) // Run daily
 	go func() {
+		// Run once immediately on startup to catch any due URLs.
+		log.Println("[Scraper] Initial startup check...")
+		TriggerScrape(db, cfg, false)
+
+		ticker := time.NewTicker(schedulerInterval)
 		for range ticker.C {
-			log.Println("[Scraper] Starting scheduled scrape run...")
-			TriggerScrape(db, cfg)
+			log.Println("[Scraper] Scheduler tick — checking for due URLs...")
+			TriggerScrape(db, cfg, false)
 		}
 	}()
 }
 
-// TriggerScrape runs the scrape job immediately. Can be called from API.
-func TriggerScrape(db *sql.DB, cfg config.Config) error {
+// TriggerScrape scrapes URLs that are due based on user plan intervals.
+// forceAll=true bypasses interval checks (used by manual sync).
+func TriggerScrape(db *sql.DB, cfg config.Config, forceAll bool) error {
 	log.Println("[Scraper] Running scrape job...")
 
-	rows, err := db.Query("SELECT id, url, product_name, last_price FROM tracked_urls")
+	var (
+		rows *sql.Rows
+		err  error
+	)
+
+	if forceAll {
+		// Manual sync: scrape all unique URLs regardless of last_checked.
+		rows, err = db.Query(`
+			SELECT DISTINCT ON (url)
+				url,
+				product_name,
+				COALESCE(last_price::text, '') AS last_price
+			FROM tracked_urls
+			ORDER BY url, last_checked ASC NULLS FIRST
+		`)
+	} else {
+		// Scheduled: only pick up URLs that are due per their user's plan tier.
+		// DISTINCT ON (url) deduplicates — the same URL only gets scraped once
+		// even if multiple users track it.
+		rows, err = db.Query(`
+			SELECT DISTINCT ON (tu.url)
+				tu.url,
+				tu.product_name,
+				COALESCE(tu.last_price::text, '') AS last_price
+			FROM tracked_urls tu
+			JOIN users u ON u.id = tu.user_id
+			WHERE
+				(u.plan_type = 'premium'
+					AND (tu.last_checked IS NULL OR tu.last_checked < NOW() - INTERVAL '1 hour'))
+			OR	(u.plan_type = 'pro'
+					AND (tu.last_checked IS NULL OR tu.last_checked < NOW() - INTERVAL '6 hours'))
+			OR	(u.plan_type NOT IN ('pro', 'premium')
+					AND (tu.last_checked IS NULL OR tu.last_checked < NOW() - INTERVAL '24 hours'))
+			ORDER BY tu.url ASC
+			LIMIT $1
+		`, maxURLsPerTick)
+	}
+
 	if err != nil {
-		log.Printf("[Scraper] DB error fetching URLs: %v", err)
+		log.Printf("[Scraper] DB error fetching due URLs: %v", err)
 		return err
 	}
-	defer rows.Close()
 
+	type urlJob struct{ url, productName, lastPrice string }
+	var jobs []urlJob
 	for rows.Next() {
-		var id, lastPriceStr sql.NullString
-		var url, productName string
-
-		if err := rows.Scan(&id, &url, &productName, &lastPriceStr); err != nil {
+		var j urlJob
+		if err := rows.Scan(&j.url, &j.productName, &j.lastPrice); err != nil {
 			log.Printf("[Scraper] Row scan error: %v", err)
 			continue
 		}
+		jobs = append(jobs, j)
+	}
+	rows.Close()
 
-		go scrapeURL(db, cfg, id.String, url, productName, lastPriceStr.String)
+	log.Printf("[Scraper] %d unique URL(s) queued for this run", len(jobs))
+
+	// Process sequentially with a short delay between scrapes to spread load
+	// on both our infrastructure and third-party sites.
+	for i, job := range jobs {
+		if i > 0 {
+			time.Sleep(scrapeDelay)
+		}
+		scrapeAndPersist(db, cfg, job.url, job.productName, job.lastPrice)
 	}
 
 	return nil
 }
 
-func scrapeURL(db *sql.DB, cfg config.Config, id, urlStr, productName, lastPriceStr string) {
+// scrapeAndPersist fetches the price for a URL and writes results for every
+// tracked_urls row that shares it, so all users tracking the same URL benefit
+// from a single network request.
+func scrapeAndPersist(db *sql.DB, cfg config.Config, urlStr, productName, lastPriceStr string) {
 	log.Printf("[Scraper] Scraping %s ...", urlStr)
 
 	parsedURL, err := url.Parse(urlStr)
@@ -122,17 +193,11 @@ func scrapeURL(db *sql.DB, cfg config.Config, id, urlStr, productName, lastPrice
 
 	if currentPrice <= 0 {
 		log.Printf("[Scraper] Extracted price is invalid (%.2f) for %s — stamping last_checked only", currentPrice, urlStr)
-		_, err = db.Exec("UPDATE tracked_urls SET last_checked = NOW() WHERE id = $1", id)
+		_, err = db.Exec("UPDATE tracked_urls SET last_checked = NOW() WHERE url = $1", urlStr)
 		if err != nil {
 			log.Printf("[Scraper] Failed to stamp last_checked for %s: %v", urlStr, err)
 		}
 		return
-	}
-
-	// Save to history
-	_, err = db.Exec("INSERT INTO price_logs (url_id, price) VALUES ($1, $2)", id, currentPrice)
-	if err != nil {
-		log.Printf("[Scraper] Failed to save price log for %s: %v", urlStr, err)
 	}
 
 	var lastPrice float64
@@ -142,12 +207,22 @@ func scrapeURL(db *sql.DB, cfg config.Config, id, urlStr, productName, lastPrice
 		}
 	}
 
-	// Always stamp last_checked so the dashboard shows the real check time
+	// Insert a price_log entry for every tracked_urls row sharing this URL
+	// so each subscriber gets a complete price history without extra scrapes.
+	_, err = db.Exec(`
+		INSERT INTO price_logs (url_id, price)
+		SELECT id, $1 FROM tracked_urls WHERE url = $2
+	`, currentPrice, urlStr)
+	if err != nil {
+		log.Printf("[Scraper] Failed to save price logs for %s: %v", urlStr, err)
+	}
+
+	// Update last_price + last_checked for all rows sharing this URL.
 	if lastPrice == 0 || lastPrice != currentPrice {
-		log.Printf("[Scraper] Price change detected for %s: %.2f -> %.2f", productName, lastPrice, currentPrice)
-		_, err = db.Exec("UPDATE tracked_urls SET last_price = $1, last_checked = NOW() WHERE id = $2", currentPrice, id)
+		log.Printf("[Scraper] Price change for %s: %.2f -> %.2f", productName, lastPrice, currentPrice)
+		_, err = db.Exec("UPDATE tracked_urls SET last_price = $1, last_checked = NOW() WHERE url = $2", currentPrice, urlStr)
 	} else {
-		_, err = db.Exec("UPDATE tracked_urls SET last_checked = NOW() WHERE id = $1", id)
+		_, err = db.Exec("UPDATE tracked_urls SET last_checked = NOW() WHERE url = $1", urlStr)
 	}
 	if err != nil {
 		log.Printf("[Scraper] Failed to update tracked_url for %s: %v", urlStr, err)
