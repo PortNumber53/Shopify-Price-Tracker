@@ -94,7 +94,7 @@ export default function Pricing() {
       {/* ── Plans ────────────────────────────────────────── */}
       <section style={{ padding: '5rem 1.5rem', background: 'var(--bg-card)' }}>
         <div style={{ maxWidth: '1060px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', alignItems: 'stretch' }}>
             {PLANS.map(plan => (
               <div
                 key={plan.key}
