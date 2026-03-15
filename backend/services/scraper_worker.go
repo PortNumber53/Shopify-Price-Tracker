@@ -24,7 +24,7 @@ type NodeOutput struct {
 var (
 	// Regex for picking up itemprop="price" content
 	priceMetaRegex = regexp.MustCompile(`itemprop="price"[^>]*content="([^"]+)"`)
-	
+
 	// Regex for picking up text with currency symbols
 	priceTextRegex = regexp.MustCompile(`[\$€£]\s?(\d+(?:,\d{3})*(?:\.\d{2})?)`)
 )
@@ -53,7 +53,7 @@ func TriggerScrape(db *sql.DB, cfg config.Config) error {
 	for rows.Next() {
 		var id, lastPriceStr sql.NullString
 		var url, productName string
-		
+
 		if err := rows.Scan(&id, &url, &productName, &lastPriceStr); err != nil {
 			log.Printf("[Scraper] Row scan error: %v", err)
 			continue
@@ -67,7 +67,7 @@ func TriggerScrape(db *sql.DB, cfg config.Config) error {
 
 func scrapeURL(db *sql.DB, cfg config.Config, id, urlStr, productName, lastPriceStr string) {
 	log.Printf("[Scraper] Scraping %s ...", urlStr)
-	
+
 	parsedURL, err := url.Parse(urlStr)
 	if err != nil {
 		log.Printf("[Scraper] Invalid URL format %s: %v", urlStr, err)
@@ -82,7 +82,7 @@ func scrapeURL(db *sql.DB, cfg config.Config, id, urlStr, productName, lastPrice
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	
+
 	err = cmd.Run()
 	if err != nil {
 		log.Printf("[Scraper] Playwright script failed for %s: %v. Stderr: %s", urlStr, err, stderr.String())
@@ -106,7 +106,7 @@ func scrapeURL(db *sql.DB, cfg config.Config, id, urlStr, productName, lastPrice
 	extractedPrice, err := ExtractPriceViaAI(cfg, domain, markdownContent)
 	if err != nil {
 		log.Printf("[Scraper] AI Price Extraction failed for %s: %v", urlStr, err)
-		
+
 		// Fallback to basic regex on the Markdown string
 		log.Printf("[Scraper] Falling back to Regex extraction for %s", urlStr)
 		extractedPrice = extractPriceFromHTML(markdownContent)
@@ -133,13 +133,15 @@ func scrapeURL(db *sql.DB, cfg config.Config, id, urlStr, productName, lastPrice
 		}
 	}
 
+	// Always stamp last_checked so the dashboard shows the real check time
 	if lastPrice == 0 || lastPrice != currentPrice {
 		log.Printf("[Scraper] Price change detected for %s: %.2f -> %.2f", productName, lastPrice, currentPrice)
-		
-		_, err = db.Exec("UPDATE tracked_urls SET last_price = $1 WHERE id = $2", currentPrice, id)
-		if err != nil {
-			log.Printf("[Scraper] Failed to update last_price for %s: %v", urlStr, err)
-		}
+		_, err = db.Exec("UPDATE tracked_urls SET last_price = $1, last_checked = NOW() WHERE id = $2", currentPrice, id)
+	} else {
+		_, err = db.Exec("UPDATE tracked_urls SET last_checked = NOW() WHERE id = $1", id)
+	}
+	if err != nil {
+		log.Printf("[Scraper] Failed to update tracked_url for %s: %v", urlStr, err)
 	}
 }
 

@@ -88,6 +88,7 @@ func createTables(db *sql.DB) {
 	migrations := []string{
 		`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255)`,
 		`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_period_end TIMESTAMP WITH TIME ZONE`,
+		`ALTER TABLE tracked_urls ADD COLUMN IF NOT EXISTS last_checked TIMESTAMP WITH TIME ZONE`,
 	}
 	for _, m := range migrations {
 		if _, err := db.Exec(m); err != nil {

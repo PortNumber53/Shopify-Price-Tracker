@@ -3,12 +3,13 @@ package models
 import "time"
 
 type TrackedURL struct {
-	ID          string    `json:"id"`
-	UserID      string    `json:"user_id"`
-	ProductName string    `json:"product_name"`
-	URL         string    `json:"url"`
-	LastPrice   float64   `json:"last_price"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID          string     `json:"id"`
+	UserID      string     `json:"user_id"`
+	ProductName string     `json:"product_name"`
+	URL         string     `json:"url"`
+	LastPrice   float64    `json:"last_price"`
+	LastChecked *time.Time `json:"last_checked"`
+	CreatedAt   time.Time  `json:"created_at"`
 }
 
 type CreateURLRequest struct {

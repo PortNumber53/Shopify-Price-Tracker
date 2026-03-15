@@ -32,7 +32,7 @@ func AddURL(db *sql.DB) gin.HandlerFunc {
 				plan_type 
 			FROM users WHERE id = $1
 		`, userID).Scan(&count, &planType)
-		
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 			return
@@ -75,7 +75,7 @@ func GetURLs(db *sql.DB) gin.HandlerFunc {
 		}
 
 		rows, err := db.Query(
-			"SELECT id, product_name, url, COALESCE(last_price, 0) as last_price, created_at FROM tracked_urls WHERE user_id = $1 ORDER BY created_at DESC",
+			"SELECT id, product_name, url, COALESCE(last_price, 0) as last_price, last_checked, created_at FROM tracked_urls WHERE user_id = $1 ORDER BY created_at DESC",
 			userID,
 		)
 		if err != nil {
@@ -87,7 +87,7 @@ func GetURLs(db *sql.DB) gin.HandlerFunc {
 		var urls []models.TrackedURL
 		for rows.Next() {
 			var u models.TrackedURL
-			if err := rows.Scan(&u.ID, &u.ProductName, &u.URL, &u.LastPrice, &u.CreatedAt); err != nil {
+			if err := rows.Scan(&u.ID, &u.ProductName, &u.URL, &u.LastPrice, &u.LastChecked, &u.CreatedAt); err != nil {
 				continue
 			}
 			urls = append(urls, u)

@@ -184,20 +184,36 @@ export default function Dashboard() {
 
   const handleSync = async () => {
     setIsSyncing(true);
+    const triggeredAt = new Date();
     try {
       const res = await fetch(`${API_URL}/api/urls/sync`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
-      if (res.ok) {
-        // Wait a few seconds for the background worker to finish scraping
-        setTimeout(() => {
-          fetchUrls();
-          setIsSyncing(false);
-        }, 3000);
-      } else {
-        setIsSyncing(false);
-      }
+      if (!res.ok) { setIsSyncing(false); return; }
+
+      // Poll every 5s for up to 60s; stop early when any last_checked is newer than triggeredAt
+      let attempts = 0;
+      const poll = async () => {
+        attempts++;
+        const r = await fetch(`${API_URL}/api/urls`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (r.ok) {
+          const data: TrackedURL[] = await r.json();
+          const updated = data.some(
+            u => u.last_checked && new Date(u.last_checked) > triggeredAt
+          );
+          if (updated || attempts >= 12) {
+            setUrls(data || []);
+            setIsSyncing(false);
+            return;
+          }
+        }
+        if (attempts < 12) setTimeout(poll, 5000);
+        else setIsSyncing(false);
+      };
+      setTimeout(poll, 5000);
     } catch (err) {
       console.error('Sync failed:', err);
       setIsSyncing(false);
