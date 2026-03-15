@@ -44,7 +44,7 @@ const PLANS = [
       '100 URL trackers',
       'Up to hourly price checks',
       'Instant email alerts',
-      'Unlimited price history',
+      '1-year price history',
       'Priority support',
       'Dedicated parsing engine',
     ],
