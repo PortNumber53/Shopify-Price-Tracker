@@ -8,7 +8,7 @@ const FEATURES = [
     bg: 'rgba(37, 99, 235, 0.08)',
     title: 'Real-time URL Monitoring',
     description:
-      "Paste any competitor product URL and we'll automatically detect price changes. Supports any Shopify store or standard e-commerce page.",
+      "Paste any competitor product URL and we'll automatically detect price changes. Supports any e-commerce platform.",
   },
   {
     icon: Bell,
@@ -79,7 +79,7 @@ export default function Features() {
             Everything you need to stay competitive
           </h1>
           <p style={{ fontSize: '1.125rem', maxWidth: '540px', margin: '0 auto 2rem' }}>
-            Simple, powerful tools built specifically for Shopify store owners who want to react to market changes instantly.
+            Simple, powerful tools built for online sellers who want to react to market changes instantly.
           </p>
           <Link to="/signup" className="btn btn-primary" style={{ textDecoration: 'none' }}>
             Start Free <ArrowRight size={16} />

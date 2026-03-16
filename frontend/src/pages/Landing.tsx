@@ -85,7 +85,7 @@ export default function Landing() {
           </h1>
 
           <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', maxWidth: '620px', margin: '0 auto 2.5rem', lineHeight: 1.7 }}>
-            A lean SaaS for Shopify sellers. Paste competitor URLs and receive instant alerts when prices change. Starting free.
+            Track competitor prices across any e-commerce platform. Paste product URLs and receive instant alerts when prices change. Starting free.
           </p>
 
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -104,7 +104,7 @@ export default function Landing() {
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
             <h2 style={{ fontSize: '2.25rem', marginBottom: '1rem' }}>Everything you need to stay competitive</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.0625rem' }}>Simple, powerful tools designed for Shopify store owners</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '1.0625rem' }}>Simple, powerful tools designed for online sellers</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
             {FEATURES.map(f => (

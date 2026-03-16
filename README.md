@@ -1,4 +1,4 @@
-# Shopify-Price-Tracker
+# Competitor-Tracker
 
 ## Dev servers & ports
 
@@ -9,7 +9,7 @@
 ## Deployment notes
 
 - **Frontend:** Deploy via Cloudflare Workers using Wrangler. Requires `CLOUDFLARE_API_TOKEN` secret (see `_env.example`).
-- **Backend:** Jenkins deploys over SSH to `grimlock@web1`. Go binary target: `/var/www/vhosts/api-shopfiy-price-tracker.truvis.co/bin`. Logs directory: `/var/www/vhosts/api-shopfiy-price-tracker.truvis.co/logs`. Configuration file path: `/etc/api-shopfiy-price-tracker.truvis.co/config.ini`.
+- **Backend:** Jenkins deploys over SSH to `grimlock@web1`. Go binary target: `/var/www/vhosts/api-competitor-tracker.truvis.co/bin`. Logs directory: `/var/www/vhosts/api-competitor-tracker.truvis.co/logs`. Configuration file path: `/etc/api-competitor-tracker.truvis.co/config.ini`.
 
 ## Environment
 

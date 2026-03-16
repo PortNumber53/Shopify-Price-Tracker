@@ -9,7 +9,7 @@ import (
 	"github.com/stripe/stripe-go/v76/price"
 	"github.com/stripe/stripe-go/v76/product"
 	"github.com/stripe/stripe-go/v76/subscription"
-	"github.com/truvis/shopify-price-tracker/backend/config"
+	"github.com/truvis/competitor-tracker/backend/config"
 )
 
 // StartTwoWaySyncWorker starts a periodic goroutine to sync DB state with Stripe.
@@ -76,7 +76,7 @@ func SyncPlans(db *sql.DB, cfg config.Config) {
 			expectedPlans[planType] = expected
 		}
 
-		// Upsert the active price into our plans table 
+		// Upsert the active price into our plans table
 		_, err := db.Exec(`
 			INSERT INTO plans (plan_type, stripe_price_id, price_cents, currency)
 			VALUES ($1, $2, $3, $4)
@@ -101,7 +101,7 @@ func SyncPlans(db *sql.DB, cfg config.Config) {
 	for planType, expected := range expectedPlans {
 		if !expected.Found {
 			log.Printf("[StripeSync] Expected plan '%s' not found on Stripe. Creating it automatically...", planType)
-			
+
 			prodParams := &stripe.ProductParams{
 				Name: stripe.String(expected.Name),
 				Metadata: map[string]string{
@@ -138,7 +138,7 @@ func SyncPlans(db *sql.DB, cfg config.Config) {
 					price_cents = EXCLUDED.price_cents,
 					currency = EXCLUDED.currency
 			`, planType, pr.ID, pr.UnitAmount, string(pr.Currency))
-			
+
 			if err != nil {
 				log.Printf("[StripeSync] Failed to upsert newly created plan '%s' to DB: %v", planType, err)
 			} else {
@@ -161,10 +161,10 @@ func syncSubscriptions(db *sql.DB, cfg config.Config) {
 
 	for rows.Next() {
 		var (
-			userID       string
-			customerID   string
-			isActiveDB   bool
-			planTypeDB   string
+			userID     string
+			customerID string
+			isActiveDB bool
+			planTypeDB string
 		)
 		if err := rows.Scan(&userID, &customerID, &isActiveDB, &planTypeDB); err != nil {
 			log.Printf("[StripeSync] Scan error: %v", err)
@@ -245,14 +245,14 @@ func migratePrice(db *sql.DB, cfg config.Config, oldPriceID string, newPriceID s
 		sub := iter.Subscription()
 
 		// Calculate how many days they've been on this plan/created.
-		// For simplicity, we compare created against gracePeriodDays. 
+		// For simplicity, we compare created against gracePeriodDays.
 		// If created + gracePeriod < now => migrate.
 		createdTime := time.Unix(sub.Created, 0)
 		expirationTime := createdTime.AddDate(0, 0, gracePeriodDays)
 
 		if time.Now().After(expirationTime) {
 			log.Printf("[MigrationWorker] Migrating subscription %s from %s to %s", sub.ID, oldPriceID, newPriceID)
-			
+
 			// To smoothly migrate on the next cycle, we update the subscription item with proration_behavior="none"
 			// Get the subscription item id
 			if len(sub.Items.Data) == 0 {

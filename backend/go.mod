@@ -1,4 +1,4 @@
-module github.com/truvis/shopify-price-tracker/backend
+module github.com/truvis/competitor-tracker/backend
 
 go 1.25.6
 

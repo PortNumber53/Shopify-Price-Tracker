@@ -1,0 +1,21 @@
+[Unit]
+Description=Competitor Tracker API
+After=network.target
+
+[Service]
+Type=simple
+User=grimlock
+Group=grimlock
+WorkingDirectory=/var/www/vhosts/api-competitor-tracker.truvis.co
+ExecStart=/var/www/vhosts/api-competitor-tracker.truvis.co/bin/api
+Restart=on-failure
+RestartSec=5
+# Load environment variables from the required path
+EnvironmentFile=/etc/api-competitor-tracker.truvis.co/config.ini
+
+# Standard Output and Error redirection to log files
+StandardOutput=append:/var/www/vhosts/api-competitor-tracker.truvis.co/logs/api-out.log
+StandardError=append:/var/www/vhosts/api-competitor-tracker.truvis.co/logs/api-err.log
+
+[Install]
+WantedBy=multi-user.target

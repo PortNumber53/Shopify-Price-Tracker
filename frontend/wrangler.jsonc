@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "shopify-price-tracker-frontend",
+	"name": "competitor-tracker-frontend",
 	"main": "worker/index.ts",
 	"compatibility_date": "2026-03-10",
 	"assets": {

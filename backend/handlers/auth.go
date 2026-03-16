@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/truvis/shopify-price-tracker/backend/models"
-	"github.com/truvis/shopify-price-tracker/backend/utils"
+	"github.com/truvis/competitor-tracker/backend/models"
+	"github.com/truvis/competitor-tracker/backend/utils"
 )
 
 func Signup(db *sql.DB) gin.HandlerFunc {

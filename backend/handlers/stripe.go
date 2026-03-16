@@ -14,7 +14,7 @@ import (
 	checkoutsession "github.com/stripe/stripe-go/v76/checkout/session"
 	stripesubscription "github.com/stripe/stripe-go/v76/subscription"
 	"github.com/stripe/stripe-go/v76/webhook"
-	"github.com/truvis/shopify-price-tracker/backend/config"
+	"github.com/truvis/competitor-tracker/backend/config"
 )
 
 func CreateCheckoutSession(db *sql.DB, cfg config.Config) gin.HandlerFunc {

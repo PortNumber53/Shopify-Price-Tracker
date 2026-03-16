@@ -6,11 +6,11 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"github.com/truvis/shopify-price-tracker/backend/config"
-	"github.com/truvis/shopify-price-tracker/backend/db"
-	"github.com/truvis/shopify-price-tracker/backend/handlers"
-	"github.com/truvis/shopify-price-tracker/backend/middleware"
-	"github.com/truvis/shopify-price-tracker/backend/services"
+	"github.com/truvis/competitor-tracker/backend/config"
+	"github.com/truvis/competitor-tracker/backend/db"
+	"github.com/truvis/competitor-tracker/backend/handlers"
+	"github.com/truvis/competitor-tracker/backend/middleware"
+	"github.com/truvis/competitor-tracker/backend/services"
 )
 
 func main() {

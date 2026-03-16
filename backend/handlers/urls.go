@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/truvis/shopify-price-tracker/backend/config"
-	"github.com/truvis/shopify-price-tracker/backend/models"
-	"github.com/truvis/shopify-price-tracker/backend/services"
+	"github.com/truvis/competitor-tracker/backend/config"
+	"github.com/truvis/competitor-tracker/backend/models"
+	"github.com/truvis/competitor-tracker/backend/services"
 )
 
 func AddURL(db *sql.DB) gin.HandlerFunc {

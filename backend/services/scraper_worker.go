@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/truvis/shopify-price-tracker/backend/config"
+	"github.com/truvis/competitor-tracker/backend/config"
 )
 
 type NodeOutput struct {

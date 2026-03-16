@@ -21,7 +21,7 @@ const STEPS = [
     desc: "Paste the product page URL of any competitor and give it a friendly name. We handle the rest.",
     detail: [
       'Supports any public product page',
-      'Works with Shopify, WooCommerce, and more',
+      'Works with any e-commerce platform',
       'Add up to your plan limit',
       'Remove or replace trackers anytime',
     ],

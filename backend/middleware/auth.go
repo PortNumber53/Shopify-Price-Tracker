@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/truvis/shopify-price-tracker/backend/utils"
+	"github.com/truvis/competitor-tracker/backend/utils"
 )
 
 func AuthMiddleware() gin.HandlerFunc {

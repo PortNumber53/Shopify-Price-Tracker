@@ -10,8 +10,8 @@ export default defineConfig({
     host: true, // listen on all interfaces for reverse proxy
     port: 20910,
     allowedHosts: [
-      "shopify-price-tracker14.dev.portnumber53.com",
-      "shopify-price-tracker164.dev.portnumber53.com"
+      "competitor-tracker14.dev.portnumber53.com",
+      "competitor-tracker164.dev.portnumber53.com"
     ],
   },
   preview: {

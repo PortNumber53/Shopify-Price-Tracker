@@ -20,7 +20,7 @@ const PLANS = [
     name: 'Pro',
     price: '$19',
     period: '/mo',
-    description: 'For active Shopify sellers',
+    description: 'For active sellers',
     features: [
       '25 URL trackers',
       'Price checks up to 4× daily',

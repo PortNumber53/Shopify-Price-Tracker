@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/sashabaranov/go-openai"
-	"github.com/truvis/shopify-price-tracker/backend/config"
+	"github.com/truvis/competitor-tracker/backend/config"
 )
 
 // ExtractPriceViaAI queries an LLM to find the exact price from the provided Markdown
@@ -45,7 +45,7 @@ Markdown Snippet:
 		resp, err := client.CreateChatCompletion(
 			context.Background(),
 			openai.ChatCompletionRequest{
-				Model: model, 
+				Model: model,
 				Messages: []openai.ChatCompletionMessage{
 					{
 						Role:    openai.ChatMessageRoleSystem,
@@ -56,7 +56,7 @@ Markdown Snippet:
 						Content: prompt,
 					},
 				},
-				Temperature: cfg.Temperature, 
+				Temperature: cfg.Temperature,
 				MaxTokens:   cfg.MaxTokens,
 			},
 		)
@@ -66,7 +66,7 @@ Markdown Snippet:
 		}
 
 		priceText := strings.TrimSpace(resp.Choices[0].Message.Content)
-		
+
 		// Clean the LLM output aggressively
 		priceText = strings.ReplaceAll(priceText, "`", "")
 		priceText = strings.ReplaceAll(priceText, "$", "")
@@ -104,11 +104,11 @@ Markdown Snippet:
 	priceStr, err := performCall(primaryProvider, primaryKey, primaryBaseURL, primaryModel)
 	if err != nil {
 		log.Printf("[AI Extraction] Primary provider %s failed: %v", primaryProvider, err)
-		
+
 		// Fallback to nvidia if openrouter fails and key is available
 		if primaryProvider == "openrouter" && cfg.NvidiaApiKey != "" {
 			log.Printf("[AI Extraction] Falling back to nvidia provider...")
-			fallbackModel := "meta/llama-3.1-8b-instruct" 
+			fallbackModel := "meta/llama-3.1-8b-instruct"
 			priceStr, err = performCall("nvidia", cfg.NvidiaApiKey, "https://integrate.api.nvidia.com/v1", fallbackModel)
 		}
 	}
@@ -129,7 +129,7 @@ Markdown Snippet:
 			return nil, fmt.Errorf("AI detected CAPTCHA or blocked page for %s", domain)
 		}
 	}
-	
+
 	val, err := strconv.ParseFloat(priceStr, 64)
 	if err != nil {
 		log.Printf("[AI Extraction] Failed to parse AI output as float: %v", err)
