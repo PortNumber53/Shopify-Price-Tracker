@@ -43,9 +43,9 @@ func SyncPlans(db *sql.DB, cfg config.Config) {
 		Amount int64
 		Found  bool
 	}{
-		"free":    {"Shopify Price Tracker - Free", 0, false},
-		"pro":     {"Shopify Price Tracker - Pro", 1900, false},
-		"premium": {"Shopify Price Tracker - Premium", 5000, false},
+		"free":    {"Competitor Tracker - Free", 0, false},
+		"pro":     {"Competitor Tracker - Pro", 1900, false},
+		"premium": {"Competitor Tracker - Premium", 5000, false},
 	}
 
 	params := &stripe.PriceListParams{

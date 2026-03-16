@@ -43,8 +43,8 @@ func main() {
 
 	// Add Trusted Proxies
 	r.SetTrustedProxies([]string{
-		"shopify-price-tracker14.dev.portnumber53.com",
-		"shopify-price-tracker164.dev.portnumber53.com",
+		"competitor-tracker14.dev.portnumber53.com",
+		"competitor-tracker164.dev.portnumber53.com",
 	})
 
 	// Setup routes

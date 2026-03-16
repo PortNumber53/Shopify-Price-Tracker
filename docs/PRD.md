@@ -52,7 +52,7 @@
 ### **3.6. Stripe Product & Price Sync**
 
 * **Two-way sync scope:** Keep Stripe Products/Prices and our internal plans in parity (create/update both directions). No auto-deletes; flag discrepancies for manual review.
-* **Metadata contract:** All Stripe objects we create must include metadata `{"saas_id":"shopify_price_tracker"}` and a `plan_type` that matches our PostgreSQL `plans.plan_type` value. Reject/ignore external objects lacking matching metadata to avoid cross-app pollution in the shared Stripe account.
+* **Metadata contract:** All Stripe objects we create must include metadata `{"saas_id":"competitor_tracker"}` and a `plan_type` that matches our PostgreSQL `plans.plan_type` value. Reject/ignore external objects lacking matching metadata to avoid cross-app pollution in the shared Stripe account.
 * **Inbound reconciliation:** When reading from Stripe, filter by `metadata.saas_id` and map `metadata.plan_type` to our local plan record. Unknown `plan_type` -> quarantine queue + alert; do not attach to users.
 * **Outbound mapping:** When creating/updating Products/Prices from our app, set the metadata fields above and store the resulting Stripe IDs on our plans table for idempotency.
 * **Change detection:** Poll Stripe (or use webhooks) to detect external edits; update local records when metadata matches, otherwise ignore.
@@ -117,11 +117,11 @@
 ## **6\. Environments & Runtime Config**
 
 * **Dev servers (bind all interfaces):** Vite `0.0.0.0:20910`, Go API `0.0.0.0:20911`, Wrangler preview `0.0.0.0:20912` (behind local reverse proxy).
-* **Backend config file:** `/etc/api-shopfiy-price-tracker.truvis.co/config.ini`
-* **Backend binary target (deploy):** `/var/www/vhosts/api-shopfiy-price-tracker.truvis.co/bin`
-* **Backend logs directory:** `/var/www/vhosts/api-shopfiy-price-tracker.truvis.co/logs`
-* **Stripe metadata contract:** `{"saas_id":"shopify_price_tracker"}`, `plan_type` (matches `plans.plan_type`).
-* **Cloudflare deploy:** uses `CLOUDFLARE_API_TOKEN` secret via Wrangler; Worker name `shopify-price-tracker-frontend`.
+* **Backend config file:** `/etc/api-competitor-tracker.truvis.co/config.ini`
+* **Backend binary target (deploy):** `/var/www/vhosts/api-competitor-tracker.truvis.co/bin`
+* **Backend logs directory:** `/var/www/vhosts/api-competitor-tracker.truvis.co/logs`
+* **Stripe metadata contract:** `{"saas_id":"competitor_tracker"}`, `plan_type` (matches `plans.plan_type`).
+* **Cloudflare deploy:** uses `CLOUDFLARE_API_TOKEN` secret via Wrangler; Worker name `competitor-tracker-frontend`.
 * **CI/CD:** Jenkins can SSH as `grimlock@web1` to deploy Go backend to the paths above.
 
 ---

@@ -4,7 +4,7 @@ const cron = require('node-cron');
 require('dotenv').config({ path: '../_env.example' }); // Load from example for dev, use .env in prod
 
 const dbParams = {
-  connectionString: process.env.DATABASE_URL || 'postgres://user:pass@localhost:5432/shopify_price_tracker?sslmode=disable',
+  connectionString: process.env.DATABASE_URL || 'postgres://user:pass@localhost:5432/competitor_tracker?sslmode=disable',
 };
 
 async function extractPrice(page) {
