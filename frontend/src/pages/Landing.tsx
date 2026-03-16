@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Eye, Bell, TrendingDown, ArrowRight, Check, Activity } from 'lucide-react';
+import { Eye, Bell, TrendingDown, ArrowRight, Check } from 'lucide-react';
 
 const FEATURES = [
   {
@@ -204,7 +204,7 @@ export default function Landing() {
       <footer style={{ padding: '2.5rem 1.5rem', borderTop: '1px solid var(--border-light)', background: 'var(--bg-glass)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-            <Activity size={20} color="var(--primary)" />
+            <img src="/logo.png" alt="Logo" width={20} height={20} style={{ borderRadius: '4px' }} />
             <span style={{ fontWeight: 600, fontSize: '1.0625rem', color: 'var(--text-main)' }}>Competitor Tracker</span>
           </Link>
 

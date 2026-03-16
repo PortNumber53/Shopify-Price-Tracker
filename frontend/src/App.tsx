@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
-import { Activity, LogOut, ChevronDown, User, CreditCard, LayoutDashboard } from 'lucide-react';
+import { LogOut, ChevronDown, User, CreditCard, LayoutDashboard } from 'lucide-react';
 import { AuthContext } from './context/AuthContext.tsx';
 
 import Login from './pages/Login.tsx';
@@ -59,7 +59,7 @@ function App() {
       <header className="header">
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Activity color="var(--primary)" size={28} />
+            <img src="/logo.png" alt="Logo" width={28} height={28} style={{ borderRadius: '4px' }} />
             <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Competitor Tracker</h2>
           </Link>
           
